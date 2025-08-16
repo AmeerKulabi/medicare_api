@@ -30,7 +30,26 @@ namespace MedicareApi.Controllers
             if (doctor == null) return Unauthorized();
 
             var appointments = await _db.Appointments.Where(a => a.DoctorId == doctor.Id).ToListAsync();
-            return Ok(appointments);
+            var doctorAppointments = new List<DoctorAppointment>();
+            foreach(var appointment in appointments)
+            {
+                var doctorAppointment = new DoctorAppointment()
+                {
+                    id = appointment.Id,
+                    patientName = "test",
+                    patientEmail = "test",
+                    patientPhone = "test",
+                    date = appointment.ScheduledAt.Date.ToShortDateString(),
+                    time = appointment.ScheduledAt.TimeOfDay.ToString(),
+                    duration = "30",
+                    reason = "test",
+                    status = "confirmed",
+                    type = "consultation"
+
+                };
+                doctorAppointments.Add(doctorAppointment);
+            }
+            return Ok(doctorAppointments);
         }
 
         [HttpPost]
@@ -57,19 +76,18 @@ namespace MedicareApi.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAppointment([FromRoute] string id, [FromBody] Appointment updates)
+        public async Task<IActionResult> UpdateAppointment([FromRoute] string id, [FromBody] UpdateAppointment updates)
         {
             var userId = User.FindFirst("uid")?.Value;
-            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
 
-            var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return Unauthorized();
-
-            var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id && a.DoctorId == doctor.Id);
+            var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
             if (appt == null) return NotFound();
 
-            appt.ScheduledAt = updates.ScheduledAt;
+            if(updates.ScheduledAt != null)
+                appt.ScheduledAt = (DateTime)updates.ScheduledAt;
+
+            if(updates.Status != null)
+                appt.Status = updates.Status;
             // Update more fields as needed
             await _db.SaveChangesAsync();
             return Ok(appt);
@@ -78,14 +96,8 @@ namespace MedicareApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAppointment([FromRoute] string id)
         {
-            var userId = User.FindFirst("uid")?.Value;
-            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
 
-            var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return Unauthorized();
-
-            var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id && a.DoctorId == doctor.Id);
+            var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
             if (appt == null) return NotFound();
 
             _db.Appointments.Remove(appt);

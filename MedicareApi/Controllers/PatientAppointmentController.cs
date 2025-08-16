@@ -18,6 +18,21 @@ namespace MedicareApi.Controllers
             _db = db;
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePatientAppointment([FromRoute] string id)
+        {
+            var userId = User.FindFirst("uid")?.Value;
+            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+            if (isDoctor) return Unauthorized();
+
+            var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
+            if (appt == null) return NotFound();
+
+            _db.Appointments.Remove(appt);
+            await _db.SaveChangesAsync();
+            return NoContent();
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetPatientAppointments([FromQuery] String type)
         {
@@ -38,6 +53,7 @@ namespace MedicareApi.Controllers
                 {
                     id = appointment.Id,
                     doctorName = doctor.Name,
+                    doctorId = doctor.Id,
                     doctorSpecialization = doctor.Specialization,
                     clinicName = doctor.ClinicName,
                     date = appointment.ScheduledAt.Date.ToShortDateString(),

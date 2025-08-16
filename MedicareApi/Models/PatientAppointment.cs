@@ -4,6 +4,7 @@
     {
         public string id { get; set; }
         public string doctorName { get; set; }
+        public string doctorId { get; set; }
         public string doctorSpecialization { get; set; }
         public string clinicName { get; set; }
         public string date {  get; set; }
