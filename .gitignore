@@ -1,0 +1,39 @@
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio files
+.vs/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ASP.NET Core
+appsettings.local.json
+*.db
+*.db-shm
+*.db-wal
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# MSBuild
+[Mm]igrations/

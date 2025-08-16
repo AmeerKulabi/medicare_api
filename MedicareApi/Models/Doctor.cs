@@ -26,6 +26,7 @@
         public string? SubSpecialization { get; set; }
         public string? BoardCertification { get; set; }
         public string? YearsOfExperience { get; set; }
+        public string? ProfessionalBiography { get; set; }
 
         // Education & Training
         public string? MedicalSchool { get; set; }
