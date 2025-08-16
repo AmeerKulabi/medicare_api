@@ -1,5 +1,6 @@
 ﻿using MedicareApi.Data;
 using MedicareApi.Models;
+using MedicareApi.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +34,7 @@ namespace MedicareApi.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateProfile([FromBody] Doctor update)
+        public async Task<IActionResult> UpdateProfile([FromBody] ProfileUpdateDto updateDto)
         {
             var userId = User.FindFirst("uid")?.Value;
             var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
@@ -42,10 +43,26 @@ namespace MedicareApi.Controllers
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
             if (doctor == null) return NotFound();
 
-            doctor.Name = update.Name;
-            doctor.Specialization = update.Specialization;
-            doctor.Location = update.Location;
-            // update more fields as needed
+            // Only update allowed fields - restrict to specific properties only
+            if (updateDto.Email != null) doctor.Email = updateDto.Email;
+            if (updateDto.Phone != null) doctor.Phone = updateDto.Phone;
+            if (updateDto.ProfessionalBiography != null) doctor.ProfessionalBiography = updateDto.ProfessionalBiography;
+            if (updateDto.Languages != null) doctor.Languages = updateDto.Languages;
+            
+            // Education & Training fields
+            if (updateDto.MedicalSchool != null) doctor.MedicalSchool = updateDto.MedicalSchool;
+            if (updateDto.GraduationYear != null) doctor.GraduationYear = updateDto.GraduationYear;
+            if (updateDto.ResidencyProgram != null) doctor.ResidencyProgram = updateDto.ResidencyProgram;
+            if (updateDto.ResidencyHospital != null) doctor.ResidencyHospital = updateDto.ResidencyHospital;
+            if (updateDto.FellowshipProgram != null) doctor.FellowshipProgram = updateDto.FellowshipProgram;
+            
+            // Hospital and clinic information
+            if (updateDto.HospitalAffiliations != null) doctor.HospitalAffiliations = updateDto.HospitalAffiliations;
+            if (updateDto.ClinicName != null) doctor.ClinicName = updateDto.ClinicName;
+            if (updateDto.ClinicAddress != null) doctor.ClinicAddress = updateDto.ClinicAddress;
+            if (updateDto.ClinicPhone != null) doctor.ClinicPhone = updateDto.ClinicPhone;
+            if (updateDto.ConsultationFee != null) doctor.ConsultationFee = updateDto.ConsultationFee;
+
             await _db.SaveChangesAsync();
             return Ok(doctor);
         }
