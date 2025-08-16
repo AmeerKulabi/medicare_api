@@ -59,7 +59,7 @@ namespace MedicareApi.Controllers
                     date = appointment.ScheduledAt.Date.ToShortDateString(),
                     time = appointment.ScheduledAt.TimeOfDay.ToString(),
                     duration = 30,
-                    reason = "TBD",
+                    reason = appointment.Reason ?? "",
                     status = appointment.Status,
                     type = "consultation",
                     address = doctor.ClinicAddress,
