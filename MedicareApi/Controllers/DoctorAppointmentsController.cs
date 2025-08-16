@@ -42,7 +42,7 @@ namespace MedicareApi.Controllers
                     date = appointment.ScheduledAt.Date.ToShortDateString(),
                     time = appointment.ScheduledAt.TimeOfDay.ToString(),
                     duration = "30",
-                    reason = "test",
+                    reason = appointment.Reason ?? "",
                     status = "confirmed",
                     type = "consultation"
 
@@ -69,6 +69,7 @@ namespace MedicareApi.Controllers
                 DoctorId = appointment.DoctorId,
                 Status = appointment.Status,
                 ScheduledAt = appointment.ScheduledAt,
+                Reason = appointment.Reason,
             };
             _db.Appointments.Add(newAppointment);
             await _db.SaveChangesAsync();
@@ -88,6 +89,9 @@ namespace MedicareApi.Controllers
 
             if(updates.Status != null)
                 appt.Status = updates.Status;
+
+            if(updates.Reason != null)
+                appt.Reason = updates.Reason;
             // Update more fields as needed
             await _db.SaveChangesAsync();
             return Ok(appt);

@@ -1,4 +1,27 @@
+<<<<<<< HEAD
 # Build results
+=======
+# Build Outputs
+bin/
+obj/
+out/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio files
+.vs/
+.vscode/
+
+# MSTest test Results
+TestResults/
+
+# Build Results
+>>>>>>> main
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -11,6 +34,7 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
+<<<<<<< HEAD
 [Ll]ogs/
 
 # Visual Studio files
@@ -37,3 +61,20 @@ packages/
 
 # MSBuild
 [Mm]igrations/
+=======
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Nuget
+*.nupkg
+*.nuget.props
+*.nuget.targets
+
+# Local database files
+*.db
+*.db-shm
+*.db-wal
+>>>>>>> main
