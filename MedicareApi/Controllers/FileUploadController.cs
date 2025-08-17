@@ -23,10 +23,13 @@ namespace MedicareApi.Controllers
         }
 
         [HttpPost("profile-picture")]
+        [DisableRequestSizeLimit]
         public async Task<IActionResult> UploadProfilePicture(IFormFile file)
         {
             try
             {
+                Console.WriteLine($"File upload request received. File: {file?.FileName}, Size: {file?.Length}");
+                
                 if (file == null || file.Length == 0)
                     return BadRequest(new { message = "No file uploaded" });
 
@@ -43,6 +46,8 @@ namespace MedicareApi.Controllers
                 var userId = User.FindFirst("uid")?.Value;
                 var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
                 
+                Console.WriteLine($"User authentication - UserId: {userId}, IsDoctor: {isDoctor}");
+                
                 if (!isDoctor || string.IsNullOrEmpty(userId))
                     return Unauthorized(new { message = "Only doctors can upload profile pictures" });
 
@@ -50,14 +55,24 @@ namespace MedicareApi.Controllers
                 if (doctor == null)
                     return NotFound(new { message = "Doctor not found" });
 
+                Console.WriteLine($"Doctor found: {doctor.Id}, Current ProfilePictureUrl: {doctor.ProfilePictureUrl}");
+
                 // Create uploads directory if it doesn't exist
-                var uploadsPath = Path.Combine(_environment.WebRootPath, "profile_pictures");
+                var uploadsPath = Path.Combine(_environment.WebRootPath ?? "wwwroot", "profile_pictures");
                 if (!Directory.Exists(uploadsPath))
+                {
                     Directory.CreateDirectory(uploadsPath);
+                    Console.WriteLine($"Created uploads directory: {uploadsPath}");
+                }
+
+                // Log the upload path for debugging
+                Console.WriteLine($"Upload path: {uploadsPath}");
 
                 // Generate unique filename
                 var fileName = $"{Guid.NewGuid()}{extension}";
                 var filePath = Path.Combine(uploadsPath, fileName);
+                
+                Console.WriteLine($"Saving file as: {fileName} at {filePath}");
 
                 // Delete old profile picture if exists
                 if (!string.IsNullOrEmpty(doctor.ProfilePictureUrl))
@@ -69,6 +84,7 @@ namespace MedicareApi.Controllers
                         if (System.IO.File.Exists(oldFilePath))
                         {
                             System.IO.File.Delete(oldFilePath);
+                            Console.WriteLine($"Deleted old profile picture: {oldFilePath}");
                         }
                     }
                 }
@@ -79,12 +95,24 @@ namespace MedicareApi.Controllers
                     await file.CopyToAsync(stream);
                 }
 
+                // Verify file was created
+                if (!System.IO.File.Exists(filePath))
+                {
+                    Console.WriteLine($"ERROR: File was not saved at {filePath}");
+                    return StatusCode(500, new { message = "File was not saved successfully" });
+                }
+
+                // Log successful file creation
+                Console.WriteLine($"File saved successfully at: {filePath}");
+
                 // Update doctor's profile picture URL
                 var fileUrl = $"/profile_pictures/{fileName}";
                 doctor.ProfilePictureUrl = fileUrl;
                 
                 _db.Doctors.Update(doctor);
                 await _db.SaveChangesAsync();
+
+                Console.WriteLine($"Database updated with new ProfilePictureUrl: {fileUrl}");
 
                 return Ok(new { 
                     message = "Profile picture uploaded successfully", 
@@ -93,6 +121,8 @@ namespace MedicareApi.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"ERROR in UploadProfilePicture: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "Error uploading file", error = ex.Message });
             }
         }

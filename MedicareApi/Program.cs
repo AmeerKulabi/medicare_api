@@ -50,6 +50,14 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Configure form options for file uploads
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 10 * 1024 * 1024; // 10MB
+    options.ValueLengthLimit = 10 * 1024 * 1024; // 10MB
+    options.MemoryBufferThreshold = 1024 * 1024; // 1MB
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
