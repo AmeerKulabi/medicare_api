@@ -59,6 +59,10 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors(MyAllowSpecificOrigins);
+
+// Configure static file serving
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

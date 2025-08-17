@@ -35,5 +35,8 @@ namespace MedicareApi.ViewModels
         
         // رسوم الاستشارة (consultation fee in IQD)
         public string? ConsultationFee { get; set; }
+        
+        // صورة الملف الشخصي (profile picture URL)
+        public string? ProfilePictureUrl { get; set; }
     }
 }

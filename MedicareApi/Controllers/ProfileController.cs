@@ -62,6 +62,7 @@ namespace MedicareApi.Controllers
             if (updateDto.ClinicAddress != null) doctor.ClinicAddress = updateDto.ClinicAddress;
             if (updateDto.ClinicPhone != null) doctor.ClinicPhone = updateDto.ClinicPhone;
             if (updateDto.ConsultationFee != null) doctor.ConsultationFee = updateDto.ConsultationFee;
+            if (updateDto.ProfilePictureUrl != null) doctor.ProfilePictureUrl = updateDto.ProfilePictureUrl;
 
             await _db.SaveChangesAsync();
             return Ok(doctor);

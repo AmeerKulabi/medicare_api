@@ -51,6 +51,9 @@
         public string? Availability { get; set; }
         public List<string>? Languages { get; set; }
 
+        // Profile Picture
+        public string? ProfilePictureUrl { get; set; }
+
         // Terms
         public bool? TermsAccepted { get; set; }
         public bool? PrivacyAccepted { get; set; }

@@ -18,6 +18,13 @@ namespace MedicareApi.Controllers
             _db = db;
         }
 
+        private string GetProfilePictureUrl(Doctor doctor)
+        {
+            if (!string.IsNullOrEmpty(doctor.ProfilePictureUrl))
+                return doctor.ProfilePictureUrl;
+            return "/profile_pictures/default-silhouette.svg";
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetDoctors([FromQuery] string? specialization, [FromQuery] string? location, [FromQuery] string? sortBy, [FromQuery] string? search)
         {
@@ -31,7 +38,51 @@ namespace MedicareApi.Controllers
             // sortBy not implemented, but you can add as needed
 
             var doctors = await query.ToListAsync();
-            return Ok(doctors);
+            
+            // Create response with profile picture URLs
+            var doctorsWithPictures = doctors.Select(doctor => new
+            {
+                doctor.Id,
+                doctor.UserId,
+                doctor.Name,
+                doctor.Email,
+                doctor.IsActive,
+                doctor.RegistrationCompleted,
+                doctor.Specialization,
+                doctor.Location,
+                doctor.Phone,
+                doctor.DateOfBirth,
+                doctor.Gender,
+                doctor.MedicalLicense,
+                doctor.LicenseState,
+                doctor.LicenseExpiry,
+                doctor.SubSpecialization,
+                doctor.BoardCertification,
+                doctor.YearsOfExperience,
+                doctor.ProfessionalBiography,
+                doctor.MedicalSchool,
+                doctor.GraduationYear,
+                doctor.ResidencyProgram,
+                doctor.ResidencyHospital,
+                doctor.FellowshipProgram,
+                doctor.ClinicName,
+                doctor.ClinicAddress,
+                doctor.ClinicCity,
+                doctor.ClinicState,
+                doctor.ClinicZip,
+                doctor.ClinicPhone,
+                doctor.PracticeType,
+                doctor.HospitalAffiliations,
+                doctor.ServicesOffered,
+                doctor.ConsultationFee,
+                doctor.Availability,
+                doctor.Languages,
+                doctor.TermsAccepted,
+                doctor.PrivacyAccepted,
+                ProfilePictureUrl = GetProfilePictureUrl(doctor)
+            }).ToList();
+            
+            return Ok(doctorsWithPictures);
         }
 
         [HttpPut]
@@ -96,7 +147,51 @@ namespace MedicareApi.Controllers
         {
             var doctor = await _db.Doctors.FindAsync(id);
             if (doctor == null) return NotFound();
-            return Ok(doctor);
+            
+            // Create response with profile picture URL
+            var doctorWithPicture = new
+            {
+                doctor.Id,
+                doctor.UserId,
+                doctor.Name,
+                doctor.Email,
+                doctor.IsActive,
+                doctor.RegistrationCompleted,
+                doctor.Specialization,
+                doctor.Location,
+                doctor.Phone,
+                doctor.DateOfBirth,
+                doctor.Gender,
+                doctor.MedicalLicense,
+                doctor.LicenseState,
+                doctor.LicenseExpiry,
+                doctor.SubSpecialization,
+                doctor.BoardCertification,
+                doctor.YearsOfExperience,
+                doctor.ProfessionalBiography,
+                doctor.MedicalSchool,
+                doctor.GraduationYear,
+                doctor.ResidencyProgram,
+                doctor.ResidencyHospital,
+                doctor.FellowshipProgram,
+                doctor.ClinicName,
+                doctor.ClinicAddress,
+                doctor.ClinicCity,
+                doctor.ClinicState,
+                doctor.ClinicZip,
+                doctor.ClinicPhone,
+                doctor.PracticeType,
+                doctor.HospitalAffiliations,
+                doctor.ServicesOffered,
+                doctor.ConsultationFee,
+                doctor.Availability,
+                doctor.Languages,
+                doctor.TermsAccepted,
+                doctor.PrivacyAccepted,
+                ProfilePictureUrl = GetProfilePictureUrl(doctor)
+            };
+            
+            return Ok(doctorWithPicture);
         }
     }
 }
