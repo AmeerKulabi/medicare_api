@@ -56,6 +56,8 @@ namespace MedicareApi.Controllers
                 doctor.SubSpecialization = formData.SubSpecialization;
             doctor.BoardCertification = formData.BoardCertification;
             doctor.YearsOfExperience= formData.YearsOfExperience;
+            if (formData.ProfessionalBiography != null)
+                doctor.ProfessionalBiography = formData.ProfessionalBiography;
             doctor.MedicalSchool = formData.MedicalSchool;
             doctor.GraduationYear = formData.GraduationYear;
             doctor.ResidencyProgram = formData.ResidencyProgram;
