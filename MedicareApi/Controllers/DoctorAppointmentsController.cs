@@ -106,7 +106,7 @@ namespace MedicareApi.Controllers
 
             _db.Appointments.Remove(appt);
             await _db.SaveChangesAsync();
-            return Ok();
+            return NoContent();
         }
 
         public static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear)

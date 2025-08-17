@@ -30,7 +30,7 @@ namespace MedicareApi.Controllers
 
             _db.Appointments.Remove(appt);
             await _db.SaveChangesAsync();
-            return Ok();
+            return NoContent();
         }
 
         [HttpGet]
