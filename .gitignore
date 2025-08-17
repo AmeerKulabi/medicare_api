@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+# Build results
+=======
 # Build Outputs
 bin/
 obj/
@@ -18,6 +21,7 @@ out/
 TestResults/
 
 # Build Results
+>>>>>>> main
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -30,6 +34,34 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
+<<<<<<< HEAD
+[Ll]ogs/
+
+# Visual Studio files
+.vs/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ASP.NET Core
+appsettings.local.json
+*.db
+*.db-shm
+*.db-wal
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# MSBuild
+[Mm]igrations/
+=======
 
 # .NET Core
 project.lock.json
@@ -45,3 +77,4 @@ artifacts/
 *.db
 *.db-shm
 *.db-wal
+>>>>>>> main

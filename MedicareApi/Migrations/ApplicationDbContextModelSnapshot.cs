@@ -229,6 +229,9 @@ namespace MedicareApi.Migrations
                     b.Property<bool?>("PrivacyAccepted")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ProfessionalBiography")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("RegistrationCompleted")
                         .HasColumnType("INTEGER");
 
