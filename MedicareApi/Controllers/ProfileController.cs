@@ -1,5 +1,6 @@
 ﻿using MedicareApi.Data;
 using MedicareApi.Models;
+using MedicareApi.Utils;
 using MedicareApi.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +30,9 @@ namespace MedicareApi.Controllers
 
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
             if (doctor == null) return NotFound();
+
+            // Ensure profile picture URL includes default if none set
+            doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
 
             return Ok(doctor);
         }
@@ -64,7 +68,41 @@ namespace MedicareApi.Controllers
             if (updateDto.ConsultationFee != null) doctor.ConsultationFee = updateDto.ConsultationFee;
 
             await _db.SaveChangesAsync();
+            
+            // Ensure profile picture URL includes default if none set
+            doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
+            
             return Ok(doctor);
+        }
+
+        [HttpPost("upload-picture")]
+        public async Task<IActionResult> UploadProfilePicture(IFormFile profilePicture)
+        {
+            var userId = User.FindFirst("uid")?.Value;
+            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+            if (!isDoctor) return Unauthorized();
+
+            var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+            if (doctor == null) return NotFound();
+
+            if (profilePicture == null || profilePicture.Length == 0)
+                return BadRequest("No file uploaded");
+
+            var result = await ProfilePictureHelper.SaveProfilePicture(profilePicture, doctor.Id);
+            if (!result.success)
+                return BadRequest(result.error);
+
+            // Delete old profile picture if exists
+            ProfilePictureHelper.DeleteProfilePicture(doctor.ProfilePictureUrl);
+
+            // Update doctor profile with new image URL
+            doctor.ProfilePictureUrl = result.url;
+            await _db.SaveChangesAsync();
+
+            return Ok(new { 
+                message = "Profile picture uploaded successfully", 
+                profilePictureUrl = doctor.ProfilePictureUrl 
+            });
         }
     }
 }

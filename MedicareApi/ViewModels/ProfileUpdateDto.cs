@@ -35,5 +35,8 @@ namespace MedicareApi.ViewModels
         
         // رسوم الاستشارة (consultation fee in IQD)
         public string? ConsultationFee { get; set; }
+        
+        // صورة الملف الشخصي (profile picture) - Note: IFormFile is used for multipart uploads
+        // This will be handled separately in the controller for multipart/form-data requests
     }
 }

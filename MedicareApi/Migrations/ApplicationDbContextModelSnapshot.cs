@@ -232,6 +232,9 @@ namespace MedicareApi.Migrations
                     b.Property<string>("ProfessionalBiography")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ProfilePictureUrl")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("RegistrationCompleted")
                         .HasColumnType("INTEGER");
 
