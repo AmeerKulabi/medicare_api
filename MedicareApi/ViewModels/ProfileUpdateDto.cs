@@ -14,6 +14,12 @@ namespace MedicareApi.ViewModels
         // اللغات المتحدث بها (spoken languages)
         public List<string>? Languages { get; set; }
         
+        // المعلومات المهنية (professional information)
+        public string? Specialization { get; set; }
+        public string? SubSpecialization { get; set; }
+        public string? BoardCertification { get; set; }
+        public string? YearsOfExperience { get; set; }
+        
         // التعليم والتدريب (education & training)
         public string? MedicalSchool { get; set; }
         public string? GraduationYear { get; set; }
@@ -35,5 +41,15 @@ namespace MedicareApi.ViewModels
         
         // رسوم الاستشارة (consultation fee in IQD)
         public string? ConsultationFee { get; set; }
+        
+        // معلومات العيادة الإضافية (additional clinic information)
+        public string? ClinicCity { get; set; }
+        public string? ClinicState { get; set; }
+        public string? ClinicZip { get; set; }
+        public string? PracticeType { get; set; }
+        
+        // الخدمات والتوفر (services & availability)
+        public List<string>? ServicesOffered { get; set; }
+        public string? Availability { get; set; }
     }
 }
