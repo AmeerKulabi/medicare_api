@@ -4,3 +4,48 @@ GET {{MedicareApi_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+# Get all doctors (includes profilePictureUrl)
+GET {{MedicareApi_HostAddress}}/api/doctors
+Accept: application/json
+
+###
+
+# Get specific doctor by ID (includes profilePictureUrl)
+GET {{MedicareApi_HostAddress}}/api/doctors/ff20b88e-ec45-4a91-96e2-158d9ad80676
+Accept: application/json
+
+###
+
+# Get default profile picture
+GET {{MedicareApi_HostAddress}}/profile_pictures/default-silhouette.svg
+
+###
+
+# Upload profile picture (requires authentication)
+# Note: This is a multipart request - use a REST client that supports file uploads
+POST {{MedicareApi_HostAddress}}/api/upload/profile-picture
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: multipart/form-data
+
+# In the body, include a file parameter named "file" with your image
+
+###
+
+# Delete profile picture (requires authentication)
+DELETE {{MedicareApi_HostAddress}}/api/upload/profile-picture
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+###
+
+# Update profile with profile picture URL (requires authentication)
+PUT {{MedicareApi_HostAddress}}/api/profile
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "email": "doctor@example.com",
+  "profilePictureUrl": "/profile_pictures/custom-image.jpg"
+}
+
+###
