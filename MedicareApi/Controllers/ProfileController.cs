@@ -99,10 +99,10 @@ namespace MedicareApi.Controllers
             doctor.ProfilePictureUrl = result.url;
             await _db.SaveChangesAsync();
 
-            return Ok(new { 
-                message = "Profile picture uploaded successfully", 
-                profilePictureUrl = doctor.ProfilePictureUrl 
-            });
+            UploadPictureResponse response = new UploadPictureResponse();
+            response.profilePictureUrl = doctor.ProfilePictureUrl;
+
+            return Ok(response);
         }
     }
 }
