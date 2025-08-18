@@ -59,6 +59,10 @@ namespace MedicareApi.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("TEXT");
 
