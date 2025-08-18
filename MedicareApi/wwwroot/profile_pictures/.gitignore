@@ -1,0 +1,6 @@
+# Ignore all uploaded files but keep structure
+*
+# Keep default silhouette and README
+!default-silhouette.svg
+!README.md
+!.gitignore

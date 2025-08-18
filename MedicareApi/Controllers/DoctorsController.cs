@@ -1,5 +1,6 @@
 ﻿using MedicareApi.Data;
 using MedicareApi.Models;
+using MedicareApi.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -31,12 +32,19 @@ namespace MedicareApi.Controllers
             // sortBy not implemented, but you can add as needed
 
             var doctors = await query.ToListAsync();
+            
+            // Ensure all doctors have profile picture URLs (default if none set)
+            foreach (var doctor in doctors)
+            {
+                doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
+            }
+            
             return Ok(doctors);
         }
 
         [HttpPut]
         [Authorize]
-        public async Task<IActionResult> UpdateDoctorInfo([FromBody] DoctorRegistrationInfo formData)
+        public async Task<IActionResult> UpdateDoctorInfo([FromForm] DoctorRegistrationInfo formData, IFormFile? profilePicture)
         {
             // Do validation and save logic here
             // Example: Save files to disk or database, insert data, etc.
@@ -44,6 +52,22 @@ namespace MedicareApi.Controllers
             Doctor doctor = _db.Doctors.FirstOrDefault(d => d.UserId == userId);
             if (doctor == null)
                 return BadRequest();
+
+            // Handle profile picture upload if provided
+            if (profilePicture != null && profilePicture.Length > 0)
+            {
+                var profilePictureResult = await ProfilePictureHelper.SaveProfilePicture(profilePicture, doctor.Id);
+                if (profilePictureResult.success)
+                {
+                    ProfilePictureHelper.DeleteProfilePicture(doctor.ProfilePictureUrl);
+                    doctor.ProfilePictureUrl = profilePictureResult.url;
+                }
+                else
+                {
+                    return BadRequest(profilePictureResult.error);
+                }
+            }
+
             doctor.Specialization = formData.Specialization;
             doctor.Phone = formData.Phone;
             doctor.DateOfBirth = formData.DateOfBirth;
@@ -96,6 +120,10 @@ namespace MedicareApi.Controllers
         {
             var doctor = await _db.Doctors.FindAsync(id);
             if (doctor == null) return NotFound();
+            
+            // Ensure profile picture URL includes default if none set
+            doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
+            
             return Ok(doctor);
         }
     }
