@@ -1,6 +1,7 @@
 ﻿using MedicareApi.Data;
 using MedicareApi.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
@@ -13,10 +14,12 @@ namespace MedicareApi.Controllers
     public class DoctorAppointmentsController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public DoctorAppointmentsController(ApplicationDbContext db)
+        public DoctorAppointmentsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
         {
             _db = db;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -33,12 +36,15 @@ namespace MedicareApi.Controllers
             var doctorAppointments = new List<DoctorAppointment>();
             foreach(var appointment in appointments)
             {
+                // Get patient information from Identity Framework
+                var patient = await _userManager.FindByIdAsync(appointment.PatientId);
+                
                 var doctorAppointment = new DoctorAppointment()
                 {
                     id = appointment.Id,
-                    patientName = "test",
-                    patientEmail = "test",
-                    patientPhone = "test",
+                    patientName = patient?.FullName ?? "Unknown",
+                    patientEmail = patient?.Email ?? "Unknown", 
+                    patientPhone = patient?.PhoneNumber ?? "Unknown",
                     date = appointment.ScheduledAt.Date.ToShortDateString(),
                     time = appointment.ScheduledAt.TimeOfDay.ToString(),
                     duration = "30",
