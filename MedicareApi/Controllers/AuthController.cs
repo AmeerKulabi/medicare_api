@@ -38,6 +38,7 @@ namespace MedicareApi.Controllers
                 UserName = model.Email,
                 Email = model.Email,
                 FullName = model.FullName,
+                PhoneNumber = model.PhoneNumber,
                 IsDoctor = model.IsDoctor
             };
             var result = await _userManager.CreateAsync(user, model.Password);
