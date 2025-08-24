@@ -101,5 +101,35 @@ namespace MedicareApi.Controllers
             await _db.SaveChangesAsync();
             return Ok(slot);
         }
+
+        /// <summary>
+        /// Updates all weekly availability slots for the authenticated doctor in a single request.
+        /// Allows doctors to update Start, End, and IsAvailable fields for multiple slots at once.
+        /// </summary>
+        /// <param name="updates">List of AvailabilitySlot objects with updated values</param>
+        /// <returns>200 OK if successful, 401 Unauthorized if not a doctor</returns>
+        [HttpPut("batch")]
+        public async Task<IActionResult> UpdateAvailabilityBatch([FromBody] List<AvailabilitySlot> updates)
+        {
+            var userId = User.FindFirst("uid")?.Value;
+            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+            if (!isDoctor) return Unauthorized();
+
+            var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+            if (doctor == null) return Unauthorized();
+
+            foreach (var update in updates)
+            {
+                var slot = await _db.AvailabilitySlots.FirstOrDefaultAsync(s => s.Id == update.Id && s.DoctorId == doctor.Id);
+                if (slot != null)
+                {
+                    slot.Start = update.Start;
+                    slot.End = update.End;
+                    slot.IsAvailable = update.IsAvailable;
+                }
+            }
+            await _db.SaveChangesAsync();
+            return Ok();
+        }
     }
 }
