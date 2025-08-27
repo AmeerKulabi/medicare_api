@@ -25,28 +25,48 @@ namespace MedicareApi.Utils
             if (file.Length > MaxFileSizeInBytes)
                 return (false, null, "File size too large. Maximum size is 5MB.");
 
+            // Additional security: validate file extension
+            var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                return (false, null, "Invalid file extension. Only JPG, JPEG, PNG, and GIF extensions are allowed.");
+
+            // Sanitize filename to prevent path traversal
+            var sanitizedDoctorId = System.Text.RegularExpressions.Regex.Replace(doctorId, @"[^a-zA-Z0-9_-]", "");
+            if (string.IsNullOrEmpty(sanitizedDoctorId))
+                return (false, null, "Invalid doctor ID");
+
             try
             {
                 // Generate unique filename
-                var extension = Path.GetExtension(file.FileName);
-                var fileName = $"{doctorId}_{Guid.NewGuid()}{extension}";
+                var fileName = $"{sanitizedDoctorId}_{Guid.NewGuid()}{extension}";
                 var directoryPath = Path.Combine("wwwroot", ProfilePicturesDirectory);
                 var filePath = Path.Combine(directoryPath, fileName);
+
+                // Additional security: ensure the file path is within expected directory
+                var fullDirectoryPath = Path.GetFullPath(directoryPath);
+                var fullFilePath = Path.GetFullPath(filePath);
+                if (!fullFilePath.StartsWith(fullDirectoryPath))
+                    return (false, null, "Invalid file path");
 
                 // Ensure directory exists
                 Directory.CreateDirectory(directoryPath);
 
-                // Save file to disk
+                // Save file to disk with additional validation
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
 
+                // Verify file was written correctly
+                if (!File.Exists(filePath) || new FileInfo(filePath).Length == 0)
+                    return (false, null, "Failed to save file");
+
                 return (true, $"/{ProfilePicturesDirectory}/{fileName}", null);
             }
             catch (Exception ex)
             {
-                return (false, null, ex.Message);
+                return (false, null, $"Error saving file: {ex.Message}");
             }
         }
 
