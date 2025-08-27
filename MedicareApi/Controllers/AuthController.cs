@@ -108,7 +108,7 @@ namespace MedicareApi.Controllers
                     issuer: _configuration["Jwt:Issuer"] ?? "medicare.app",
                     audience: null,
                     claims: claims,
-                    expires: DateTime.Now.AddDays(7),
+                    expires: DateTime.Now.AddMinutes(10),
                     signingCredentials: creds
                 );
                 Boolean registrationCompleted = false;
