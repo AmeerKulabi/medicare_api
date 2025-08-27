@@ -4,6 +4,7 @@ using MedicareApi.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Numerics;
@@ -33,6 +34,10 @@ namespace MedicareApi.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(MedicareApi.ViewModels.RegisterRequest model)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var user = new ApplicationUser
             {
                 UserName = model.Email,
@@ -66,15 +71,17 @@ namespace MedicareApi.Controllers
                 new Claim("uid", user.Id),
                 new Claim("isDoctor", user.IsDoctor.ToString())
             };
-            // [TODO] Change secret to secure one and store it somewhere secure.
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "DEMO_SUPER_SECRET_KEY"));
+            
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] 
+                ?? throw new InvalidOperationException("JWT key not configured")));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            var tokenExpirationMinutes = _configuration.GetValue<int>("Jwt:AccessTokenExpirationMinutes", 60);
             var token = new JwtSecurityToken(
             issuer: _configuration["Jwt:Issuer"] ?? "medicare.app",
             audience: null,
             claims: claims,
-            expires: DateTime.Now.AddMinutes(10),
+            expires: DateTime.UtcNow.AddMinutes(tokenExpirationMinutes),
             signingCredentials: creds
             );
 
@@ -86,6 +93,11 @@ namespace MedicareApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(MedicareApi.ViewModels.LoginRequest model)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
@@ -100,15 +112,17 @@ namespace MedicareApi.Controllers
                     new Claim("uid", user.Id),
                     new Claim("isDoctor", user.IsDoctor.ToString())
                 };
-                // [TODO] Change secret to secure one and store it somewhere secure.
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "DEMO_SUPER_SECRET_KEY"));
+                
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] 
+                    ?? throw new InvalidOperationException("JWT key not configured")));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+                var tokenExpirationMinutes = _configuration.GetValue<int>("Jwt:AccessTokenExpirationMinutes", 60);
                 var token = new JwtSecurityToken(
                     issuer: _configuration["Jwt:Issuer"] ?? "medicare.app",
                     audience: null,
                     claims: claims,
-                    expires: DateTime.Now.AddDays(7),
+                    expires: DateTime.UtcNow.AddMinutes(tokenExpirationMinutes),
                     signingCredentials: creds
                 );
                 Boolean registrationCompleted = false;
