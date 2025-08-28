@@ -20,16 +20,34 @@ namespace MedicareApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetDoctors([FromQuery] string? specialization, [FromQuery] string? location, [FromQuery] string? sortBy, [FromQuery] string? search)
+        public async Task<IActionResult> GetDoctors([FromQuery] string? specialization, [FromQuery] string? location, [FromQuery] string? country, [FromQuery] string? sortBy, [FromQuery] string? search)
         {
             var query = _db.Doctors.AsQueryable();
             if (!string.IsNullOrEmpty(specialization))
                 query = query.Where(d => d.Specialization == specialization);
             if (!string.IsNullOrEmpty(location))
                 query = query.Where(d => d.Location == location);
+            if (!string.IsNullOrEmpty(country))
+                query = query.Where(d => d.Country == country);
             if (!string.IsNullOrEmpty(search))
-                query = query.Where(d => d.Name.Contains(search) || d.Specialization.Contains(search));
-            // sortBy not implemented, but you can add as needed
+                query = query.Where(d => d.Name.Contains(search) || (d.Specialization != null && d.Specialization.Contains(search)));
+            
+            // Apply sorting
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                switch (sortBy.ToLower())
+                {
+                    case "name":
+                        query = query.OrderBy(d => d.Name);
+                        break;
+                    case "consultationfee":
+                        query = query.OrderBy(d => d.ConsultationFee);
+                        break;
+                    case "yearsofexperience":
+                        query = query.OrderByDescending(d => d.YearsOfExperience);
+                        break;
+                }
+            }
 
             var doctors = await query.ToListAsync();
             

@@ -15,6 +15,7 @@
         // Personal Information
         public string? Specialization { get; set; }
         public string? Location { get; set; }
+        public string? Country { get; set; }
         
         public string? Phone { get; set; }
         public string? DateOfBirth { get; set; }  // Consider using DateTime if you're sending ISO format

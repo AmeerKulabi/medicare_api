@@ -180,6 +180,9 @@ namespace MedicareApi.Migrations
                     b.Property<string>("ConsultationFee")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Country")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("DateOfBirth")
                         .HasColumnType("TEXT");
 
