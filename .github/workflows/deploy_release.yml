@@ -34,8 +34,8 @@ jobs:
     - name: Find latest successful commit from main
       id: find-commit
       run: |
-        # Get the main branch reference
-        git fetch origin main:main
+        # The repo is already up to date after checkout
+        # Remove: git fetch origin main:main
         
         # Find the latest successful workflow run on main branch
         LATEST_SUCCESS_SHA=$(curl -s \
