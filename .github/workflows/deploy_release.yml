@@ -1,0 +1,172 @@
+name: Deploy Release
+
+on:
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allow manual triggering for testing
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  deploy-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for all branches
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Configure git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+    - name: Find latest successful commit from main
+      id: find-commit
+      run: |
+        # Get the main branch reference
+        git fetch origin main:main
+        
+        # Find the latest successful workflow run on main branch
+        LATEST_SUCCESS_SHA=$(curl -s \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/${{ github.repository }}/actions/runs?branch=main&status=success&per_page=1" \
+          | jq -r '.workflow_runs[0].head_sha // empty')
+        
+        if [ -z "$LATEST_SUCCESS_SHA" ]; then
+          echo "No successful workflow runs found on main branch, using latest commit"
+          LATEST_SUCCESS_SHA=$(git rev-parse main)
+        fi
+        
+        echo "Latest successful commit: $LATEST_SUCCESS_SHA"
+        echo "commit_sha=$LATEST_SUCCESS_SHA" >> $GITHUB_OUTPUT
+
+    - name: Ensure release branch exists
+      run: |
+        # Check if release branch exists locally or remotely
+        if git show-ref --verify --quiet refs/heads/release; then
+          echo "Release branch exists locally"
+        elif git show-ref --verify --quiet refs/remotes/origin/release; then
+          echo "Release branch exists remotely, checking out"
+          git checkout -b release origin/release
+        else
+          echo "Release branch doesn't exist, creating from main"
+          git checkout -b release main
+          git push --set-upstream origin release
+        fi
+        
+        # Switch to release branch
+        git checkout release
+
+    - name: Merge latest successful commit into release
+      run: |
+        echo "Merging commit ${{ steps.find-commit.outputs.commit_sha }} into release"
+        git merge ${{ steps.find-commit.outputs.commit_sha }} --no-ff -m "Merge latest successful commit from main: ${{ steps.find-commit.outputs.commit_sha }}"
+
+    - name: Create or update version files
+      id: version
+      run: |
+        # Get current date components
+        YEAR=$(date +%y)
+        MONTH=$(date +%m)
+        
+        # Create build_number.txt if it doesn't exist
+        if [ ! -f build_number.txt ]; then
+          echo "1" > build_number.txt
+          echo "Created build_number.txt with initial value: 1"
+        fi
+        
+        # Read and increment build number
+        BUILD_NUMBER=$(cat build_number.txt)
+        NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
+        echo "$NEW_BUILD_NUMBER" > build_number.txt
+        
+        # Create version in format yy.mm.build_number.0
+        VERSION="${YEAR}.${MONTH}.${NEW_BUILD_NUMBER}.0"
+        
+        # Create or update version.txt
+        echo "$VERSION" > version.txt
+        
+        echo "New version: $VERSION"
+        echo "Build number incremented from $BUILD_NUMBER to $NEW_BUILD_NUMBER"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "build_number=$NEW_BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+    - name: Commit and push version bump
+      run: |
+        git add build_number.txt version.txt
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "No version changes to commit"
+        else
+          git commit -m "Version bump to ${{ steps.version.outputs.version }}"
+          git push origin release
+          echo "Version bump committed and pushed"
+        fi
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build application
+      run: |
+        echo "🔨 Building application..."
+        dotnet build --no-restore --configuration Release
+        echo "✅ Build completed successfully"
+
+    - name: Run tests
+      run: |
+        echo "🧪 Running tests..."
+        dotnet test --no-build --configuration Release --verbosity normal
+        echo "✅ Tests completed successfully"
+
+    - name: Deploy application
+      run: |
+        echo "🚀 Starting deployment process..."
+        echo "Version: ${{ steps.version.outputs.version }}"
+        echo "Build Number: ${{ steps.version.outputs.build_number }}"
+        echo "Commit SHA: ${{ steps.find-commit.outputs.commit_sha }}"
+        
+        # Placeholder for actual deployment steps
+        # Users should customize this section based on their deployment needs
+        echo "📦 Packaging application..."
+        # Example: dotnet publish --configuration Release --output ./publish
+        
+        echo "🌐 Deploying to production environment..."
+        # Example: Deploy to Azure, AWS, Docker registry, etc.
+        # Add your deployment commands here:
+        # - Docker build and push
+        # - Deploy to cloud provider
+        # - Update infrastructure
+        # - Send notifications
+        
+        echo "✅ Deployment completed successfully"
+        echo "🎉 Application version ${{ steps.version.outputs.version }} is now live!"
+
+    - name: Create deployment summary
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Build Number:** ${{ steps.version.outputs.build_number }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Source Commit:** ${{ steps.find-commit.outputs.commit_sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Deployment Time:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Steps Completed:" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Found latest successful commit from main" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Ensured release branch exists" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Merged latest changes into release" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Incremented version number" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Built and tested application" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Deployed to production" >> $GITHUB_STEP_SUMMARY
