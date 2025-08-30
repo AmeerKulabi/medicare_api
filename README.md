@@ -237,15 +237,24 @@ dotnet test MedicareApi.Tests
 dotnet test --list-tests
 ```
 
-## 🚀 Continuous Integration
+## 🚀 Continuous Integration & Deployment
 
-This project includes a GitHub Actions CI/CD pipeline (`.github/workflows/ci.yml`) that:
+This project includes two GitHub Actions workflows for automated CI/CD:
 
+### 📋 CI Pipeline (`.github/workflows/ci.yml`)
 - **Runs automatically** on every push and pull request
 - **Executes the full test suite** with detailed reporting
 - **Generates code coverage reports** with trend analysis
 - **Enforces quality gates** with minimum coverage thresholds
 - **Provides test artifacts** for debugging failed test runs
+
+### 🚢 Release Deployment (`.github/workflows/deploy_release.yml`)
+- **Runs daily at midnight UTC** or can be triggered manually
+- **Finds latest successful commit** from main branch
+- **Creates/manages release branch** automatically
+- **Increments version numbers** in `yy.mm.build_number.0` format
+- **Builds, tests, and deploys** to production environment
+- **Manages version files** (`build_number.txt`, `version.txt`)
 
 ### CI Test Execution
 
