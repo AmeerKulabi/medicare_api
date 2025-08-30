@@ -122,8 +122,11 @@ jobs:
     - name: Run security analysis
       run: |
         dotnet list package --vulnerable --include-transitive 2>&1 | tee vulnerable-packages.txt
-        if grep -q "vulnerable" vulnerable-packages.txt; then
+
+        if grep -qE 'Severity:|Critical|High|Medium|Low' vulnerable-packages.txt; then
           echo "Vulnerable packages found!"
           cat vulnerable-packages.txt
           exit 1
+        else
+          echo "No vulnerable packages found."
         fi
