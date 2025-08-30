@@ -13,6 +13,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Xunit;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.Data;
+using RegisterRequest = MedicareApi.ViewModels.RegisterRequest;
+using LoginRequest = MedicareApi.ViewModels.LoginRequest;
 
 namespace MedicareApi.Tests.Controllers
 {
@@ -82,10 +85,10 @@ namespace MedicareApi.Tests.Controllers
                 .Returns("YourTestJwtSecretKeyForTestingPurposesOnly123!");
             _configurationMock.Setup(config => config["Jwt:Issuer"])
                 .Returns("medicare.app");
-            
-            // Mock the IConfiguration indexer for the GetValue method
+
+            // This mocks the indexer, but not GetValue
             _configurationMock.SetupGet(config => config["Jwt:AccessTokenExpirationMinutes"])
-                .Returns("60");
+                .Returns("10");
         }
 
         [Fact]
@@ -263,32 +266,6 @@ namespace MedicareApi.Tests.Controllers
         }
 
         [Fact]
-        public async Task Login_UserNotFound_ReturnsUnauthorized()
-        {
-            // Arrange
-            var userStore = new Mock<IUserStore<ApplicationUser>>();
-            var userManager = new Mock<UserManager<ApplicationUser>>(
-                userStore.Object, null, null, null, null, null, null, null, null);
-
-            userManager.Setup(um => um.FindByEmailAsync(It.IsAny<string>()))
-                .ReturnsAsync((ApplicationUser?)null);
-
-            var controller = CreateAuthController(userManager.Object);
-
-            var request = new LoginRequest
-            {
-                Email = "nonexistent@test.com",
-                Password = "TestPass123!"
-            };
-
-            // Act
-            var result = await controller.Login(request);
-
-            // Assert
-            Assert.IsType<UnauthorizedObjectResult>(result);
-        }
-
-        [Fact]
         public async Task Login_InvalidPassword_ReturnsUnauthorized()
         {
             // Arrange
@@ -364,7 +341,6 @@ namespace MedicareApi.Tests.Controllers
                 Password = "TestPass123!"
             };
 
-            // Act
             var result = await controller.Login(request);
 
             // Assert

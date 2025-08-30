@@ -13,15 +13,40 @@ using System.Text;
 
 namespace MedicareApi.Controllers
 {
+    /// <summary>
+    /// Controller for adding new user and signing in.
+    /// </summary>
     [ApiController]
     [Route("api/auth")]
     public class AuthController : ControllerBase
     {
+        /// <summary>
+        /// Identity framework, user manager.
+        /// </summary>
         private readonly UserManager<ApplicationUser> _userManager;
+
+        /// <summary>
+        /// Identity framework, sign in manager.
+        /// </summary>
         private readonly SignInManager<ApplicationUser> _signInManager;
+
+        /// <summary>
+        /// Configuration mananger.
+        /// </summary>
         private readonly IConfiguration _configuration;
+
+        /// <summary>
+        /// Access db.
+        /// </summary>
         private readonly ApplicationDbContext _db;
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="userManager">Identity framework, user manager.</param>
+        /// <param name="signInManager">Identity framework, sign in manager.</param>
+        /// <param name="configuration">Configuration mananger.</param>
+        /// <param name="db">Access db.</param>
         public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration,
             ApplicationDbContext db)
         {
@@ -31,6 +56,12 @@ namespace MedicareApi.Controllers
             _db = db;
         }
 
+        /// <summary>
+        /// Registers new user.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         [HttpPost("register")]
         public async Task<IActionResult> Register(MedicareApi.ViewModels.RegisterRequest model)
         {
@@ -76,12 +107,13 @@ namespace MedicareApi.Controllers
                 ?? throw new InvalidOperationException("JWT key not configured")));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var tokenExpirationMinutes = _configuration.GetValue<int>("Jwt:AccessTokenExpirationMinutes", 60);
+            var minutesStr = _configuration["Jwt:AccessTokenExpirationMinutes"];
+            var minutes = int.TryParse(minutesStr, out var m) ? m : 10;
             var token = new JwtSecurityToken(
             issuer: _configuration["Jwt:Issuer"] ?? "medicare.app",
             audience: null,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(tokenExpirationMinutes),
+            expires: DateTime.UtcNow.AddMinutes(minutes),
             signingCredentials: creds
             );
 
@@ -100,8 +132,8 @@ namespace MedicareApi.Controllers
 
             try
             {
-                var user = await _userManager.FindByEmailAsync(model.Email);
-                if (user == null) return Unauthorized();
+                var user = _userManager.Users.FirstOrDefault(a => a.UserName == model.Email);
+                if (user == null) return new NotFoundObjectResult("User does not exist");
 
                 var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
                 if (!result.Succeeded) return Unauthorized();
@@ -117,12 +149,13 @@ namespace MedicareApi.Controllers
                     ?? throw new InvalidOperationException("JWT key not configured")));
                 var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-                var tokenExpirationMinutes = _configuration.GetValue<int>("Jwt:AccessTokenExpirationMinutes", 60);
+                var minutesStr = _configuration["Jwt:AccessTokenExpirationMinutes"];
+                var minutes = int.TryParse(minutesStr, out var m) ? m : 10;
                 var token = new JwtSecurityToken(
                     issuer: _configuration["Jwt:Issuer"] ?? "medicare.app",
                     audience: null,
                     claims: claims,
-                    expires: DateTime.UtcNow.AddMinutes(tokenExpirationMinutes),
+                    expires: DateTime.UtcNow.AddMinutes(minutes),
                     signingCredentials: creds
                 );
                 Boolean registrationCompleted = false;

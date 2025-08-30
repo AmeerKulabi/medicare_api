@@ -49,11 +49,14 @@ namespace MedicareApi.Controllers
             // Do validation and save logic here
             // Example: Save files to disk or database, insert data, etc.
             string userId = User.FindFirstValue("uid");
+            string isDoctor = User.FindFirstValue("isDoctor");
+            if (string.IsNullOrEmpty(isDoctor) || isDoctor == "False") return Unauthorized();
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            //if (User.Claims.FirstOrDefault( a => a.));
             
             Doctor doctor = _db.Doctors.FirstOrDefault(d => d.UserId == userId);
             if (doctor == null)
-                return BadRequest();
+                return NotFound();
 
             // Handle profile picture upload if provided
             if (profilePicture != null && profilePicture.Length > 0)
@@ -114,7 +117,7 @@ namespace MedicareApi.Controllers
             _db.Doctors.Update(doctor);
             await _db.SaveChangesAsync();
 
-            return Ok(new { message = "Registration successful" });
+            return Ok(doctor);
         }
 
         [HttpGet("{id}")]
