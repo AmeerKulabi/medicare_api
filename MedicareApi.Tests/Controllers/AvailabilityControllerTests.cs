@@ -73,6 +73,7 @@ namespace MedicareApi.Tests.Controllers
         {
             // Arrange
             var controller = new AvailabilityController(_context);
+            SetupControllerContextWithoutAuth(controller);
 
             // Act
             var result = await controller.GetAvailability();
@@ -207,6 +208,7 @@ namespace MedicareApi.Tests.Controllers
         {
             // Arrange
             var controller = new AvailabilityController(_context);
+            SetupControllerContextWithoutAuth(controller);
             var update = new AvailabilitySlot
             {
                 Start = "9.00",
@@ -397,6 +399,20 @@ namespace MedicareApi.Tests.Controllers
             };
             
             var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+            
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = principal
+                }
+            };
+        }
+
+        private void SetupControllerContextWithoutAuth(ControllerBase controller)
+        {
+            var identity = new ClaimsIdentity(); // Empty identity (no claims)
             var principal = new ClaimsPrincipal(identity);
             
             controller.ControllerContext = new ControllerContext

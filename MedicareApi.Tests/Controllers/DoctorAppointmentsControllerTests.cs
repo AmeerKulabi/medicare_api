@@ -97,6 +97,7 @@ namespace MedicareApi.Tests.Controllers
         {
             // Arrange
             var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContextWithoutAuth(controller);
 
             // Act
             var result = await controller.GetAppointments();
@@ -154,6 +155,7 @@ namespace MedicareApi.Tests.Controllers
         {
             // Arrange
             var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContextWithoutAuth(controller);
             var appointment = new Appointment
             {
                 PatientId = "patient-user-id",
@@ -255,6 +257,7 @@ namespace MedicareApi.Tests.Controllers
         {
             // Arrange
             var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContextWithoutAuth(controller);
             var update = new UpdateAppointment
             {
                 Status = "cancelled"
@@ -337,6 +340,7 @@ namespace MedicareApi.Tests.Controllers
         {
             // Arrange
             var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContextWithoutAuth(controller);
 
             // Act
             var result = await controller.DeleteAppointment("appointment-1");
@@ -428,6 +432,20 @@ namespace MedicareApi.Tests.Controllers
             };
             
             var identity = new ClaimsIdentity(claims);
+            var principal = new ClaimsPrincipal(identity);
+            
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = principal
+                }
+            };
+        }
+
+        private void SetupControllerContextWithoutAuth(ControllerBase controller)
+        {
+            var identity = new ClaimsIdentity(); // Empty identity (no claims)
             var principal = new ClaimsPrincipal(identity);
             
             controller.ControllerContext = new ControllerContext

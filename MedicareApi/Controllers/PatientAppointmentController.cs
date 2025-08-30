@@ -22,10 +22,12 @@ namespace MedicareApi.Controllers
         public async Task<IActionResult> DeletePatientAppointment([FromRoute] string id)
         {
             var userId = User.FindFirst("uid")?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            
             var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
             if (isDoctor) return Unauthorized();
 
-            var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
+            var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id && a.PatientId == userId);
             if (appt == null) return NotFound();
 
             _db.Appointments.Remove(appt);
@@ -37,6 +39,8 @@ namespace MedicareApi.Controllers
         public async Task<IActionResult> GetPatientAppointments([FromQuery] String type)
         {
             var userId = User.FindFirst("uid")?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            
             var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
             if (isDoctor) return Unauthorized();
 
