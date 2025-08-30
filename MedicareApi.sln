@@ -5,6 +5,8 @@ VisualStudioVersion = 17.8.34309.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MedicareApi", "MedicareApi\MedicareApi.csproj", "{A5B7EF66-E35E-44D2-AB38-E92450B75090}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MedicareApi.Tests", "MedicareApi.Tests\MedicareApi.Tests.csproj", "{0C281280-B57C-43E7-B715-699B8D1663A1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{A5B7EF66-E35E-44D2-AB38-E92450B75090}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5B7EF66-E35E-44D2-AB38-E92450B75090}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5B7EF66-E35E-44D2-AB38-E92450B75090}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C281280-B57C-43E7-B715-699B8D1663A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C281280-B57C-43E7-B715-699B8D1663A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C281280-B57C-43E7-B715-699B8D1663A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C281280-B57C-43E7-B715-699B8D1663A1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
