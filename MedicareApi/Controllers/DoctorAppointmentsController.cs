@@ -27,6 +27,8 @@ namespace MedicareApi.Controllers
         {
 
             var userId = User.FindFirst("uid")?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            
             var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
             if (!isDoctor) return Unauthorized();
 
@@ -63,12 +65,24 @@ namespace MedicareApi.Controllers
         public async Task<IActionResult> CreateAppointment([FromBody] Appointment appointment)
         {
             var userId = User.FindFirst("uid")?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            
             var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
 
-            var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-
-            if(appointment.PatientId != userId && isDoctor && appointment.DoctorId != doctor.Id)
+            // Non-doctor users can only create appointments for themselves
+            if (!isDoctor && appointment.PatientId != userId)
                 return Unauthorized();
+
+            // If user is a doctor, verify they can create appointments
+            if (isDoctor)
+            {
+                var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+                if (doctor == null) return Unauthorized();
+                
+                // Doctor can create appointments for any patient, but must be for their own doctor record
+                if (appointment.DoctorId != doctor.Id)
+                    return Unauthorized();
+            }
 
             Appointment newAppointment = new Appointment()
             {
@@ -87,6 +101,10 @@ namespace MedicareApi.Controllers
         public async Task<IActionResult> UpdateAppointment([FromRoute] string id, [FromBody] UpdateAppointment updates)
         {
             var userId = User.FindFirst("uid")?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            
+            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+            if (!isDoctor) return Unauthorized();
 
             var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
             if (appt == null) return NotFound();
@@ -107,6 +125,11 @@ namespace MedicareApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAppointment([FromRoute] string id)
         {
+            var userId = User.FindFirst("uid")?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            
+            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+            if (!isDoctor) return Unauthorized();
 
             var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
             if (appt == null) return NotFound();

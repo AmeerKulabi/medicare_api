@@ -49,6 +49,8 @@ namespace MedicareApi.Controllers
             // Do validation and save logic here
             // Example: Save files to disk or database, insert data, etc.
             string userId = User.FindFirstValue("uid");
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            
             Doctor doctor = _db.Doctors.FirstOrDefault(d => d.UserId == userId);
             if (doctor == null)
                 return BadRequest();
