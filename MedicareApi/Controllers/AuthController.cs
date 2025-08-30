@@ -132,11 +132,11 @@ namespace MedicareApi.Controllers
 
             try
             {
-                var user = _userManager.Users.FirstOrDefault(a => a.UserName == model.Email);
+                var user = await _userManager.FindByEmailAsync(model.Email);
                 if (user == null) return new NotFoundObjectResult("User does not exist");
 
-                var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
-                if (!result.Succeeded) return Unauthorized();
+                var passwordValid = await _userManager.CheckPasswordAsync(user, model.Password);
+                if (!passwordValid) return new UnauthorizedObjectResult("Invalid password");
 
                 var claims = new List<Claim>
                 {
