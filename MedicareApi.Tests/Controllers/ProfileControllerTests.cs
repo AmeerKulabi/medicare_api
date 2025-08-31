@@ -70,7 +70,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.GetProfile();
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -84,7 +84,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.GetProfile();
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -98,7 +98,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.GetProfile();
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -135,7 +135,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UpdateProfile(updateDto);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -153,7 +153,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UpdateProfile(updateDto);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -171,7 +171,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UpdateProfile(updateDto);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -287,7 +287,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UploadProfilePicture(file);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -302,7 +302,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UploadProfilePicture(file);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -317,7 +317,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UploadProfilePicture(file);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]

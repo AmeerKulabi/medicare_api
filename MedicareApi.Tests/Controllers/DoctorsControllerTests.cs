@@ -196,7 +196,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UpdateDoctorInfo(formData, null);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -214,7 +214,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UpdateDoctorInfo(formData, null);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -232,7 +232,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UpdateDoctorInfo(formData, null);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]

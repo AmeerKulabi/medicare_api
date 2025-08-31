@@ -83,7 +83,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.GetAvailability();
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -97,7 +97,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.GetAvailability();
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -111,7 +111,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.GetAvailability();
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -224,7 +224,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UpdateAvailabilitySlot("slot-1", update);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -244,7 +244,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UpdateAvailabilitySlot("slot-1", update);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -264,7 +264,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UpdateAvailabilitySlot("slot-1", update);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]

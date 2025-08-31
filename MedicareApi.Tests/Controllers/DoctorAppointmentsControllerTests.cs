@@ -106,7 +106,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.GetAppointments();
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -120,7 +120,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.GetAppointments();
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -134,7 +134,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.GetAppointments();
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -172,7 +172,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.CreateAppointment(appointment);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -195,7 +195,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.CreateAppointment(appointment);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -270,7 +270,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UpdateAppointment("appointment-1", update);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -288,7 +288,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.UpdateAppointment("appointment-1", update);
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -349,7 +349,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.DeleteAppointment("appointment-1");
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
@@ -363,7 +363,7 @@ namespace MedicareApi.Tests.Controllers
             var result = await controller.DeleteAppointment("appointment-1");
 
             // Assert
-            Assert.IsType<UnauthorizedResult>(result);
+            Assert.IsType<UnauthorizedObjectResult>(result);
         }
 
         [Fact]
