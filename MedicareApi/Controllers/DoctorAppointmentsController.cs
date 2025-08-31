@@ -15,25 +15,60 @@ namespace MedicareApi.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<DoctorAppointmentsController> _logger;
 
-        public DoctorAppointmentsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public DoctorAppointmentsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager, ILogger<DoctorAppointmentsController> logger)
         {
             _db = db;
             _userManager = userManager;
+            _logger = logger;
+        }
+
+        private IActionResult CheckDoctorAuthorization(out string userId, out Doctor? doctor)
+        {
+            userId = User.FindFirst("uid")?.Value ?? "";
+            doctor = null;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogWarning("Unauthorized access attempt: Missing user ID in JWT token");
+                return Unauthorized(new { error = "Unauthorized: Valid user token required." });
+            }
+
+            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+            if (!isDoctor)
+            {
+                _logger.LogWarning("Unauthorized access attempt: User {UserId} is not a doctor", userId);
+                return Unauthorized(new { error = "Unauthorized: doctor access required." });
+            }
+
+            return Ok(); // Will be ignored, just used for method signature
+        }
+
+        private async Task<IActionResult?> ValidateDoctorExistsAsync(string userId)
+        {
+            var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+            if (doctor == null)
+            {
+                _logger.LogWarning("Unauthorized access attempt: Doctor record not found for user {UserId}", userId);
+                return Unauthorized(new { error = "Unauthorized: doctor profile not found." });
+            }
+            return null; // No error
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAppointments()
         {
-
-            var userId = User.FindFirst("uid")?.Value;
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-            
-            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+            var authResult = CheckDoctorAuthorization(out string userId, out Doctor? _);
+            if (authResult is UnauthorizedObjectResult)
+                return authResult;
 
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return Unauthorized();
+            if (doctor == null)
+            {
+                _logger.LogWarning("Unauthorized access attempt: Doctor record not found for user {UserId}", userId);
+                return Unauthorized(new { error = "Unauthorized: doctor profile not found." });
+            }
 
             var appointments = await _db.Appointments.Where(a => a.DoctorId == doctor.Id).ToListAsync();
             var doctorAppointments = new List<DoctorAppointment>();
@@ -65,23 +100,37 @@ namespace MedicareApi.Controllers
         public async Task<IActionResult> CreateAppointment([FromBody] Appointment appointment)
         {
             var userId = User.FindFirst("uid")?.Value;
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogWarning("Unauthorized access attempt: Missing user ID in JWT token");
+                return Unauthorized(new { error = "Unauthorized: Valid user token required." });
+            }
             
             var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
 
             // Non-doctor users can only create appointments for themselves
             if (!isDoctor && appointment.PatientId != userId)
-                return Unauthorized();
+            {
+                _logger.LogWarning("Unauthorized access attempt: User {UserId} attempted to create appointment for different patient", userId);
+                return Unauthorized(new { error = "Unauthorized: can only create appointments for yourself." });
+            }
 
             // If user is a doctor, verify they can create appointments
             if (isDoctor)
             {
                 var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-                if (doctor == null) return Unauthorized();
+                if (doctor == null)
+                {
+                    _logger.LogWarning("Unauthorized access attempt: Doctor record not found for user {UserId}", userId);
+                    return Unauthorized(new { error = "Unauthorized: doctor profile not found." });
+                }
                 
                 // Doctor can create appointments for any patient, but must be for their own doctor record
                 if (appointment.DoctorId != doctor.Id)
-                    return Unauthorized();
+                {
+                    _logger.LogWarning("Unauthorized access attempt: Doctor {UserId} attempted to create appointment for different doctor {DoctorId}", userId, appointment.DoctorId);
+                    return Unauthorized(new { error = "Unauthorized: can only create appointments for your own practice." });
+                }
             }
 
             Appointment newAppointment = new Appointment()
@@ -100,11 +149,9 @@ namespace MedicareApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAppointment([FromRoute] string id, [FromBody] UpdateAppointment updates)
         {
-            var userId = User.FindFirst("uid")?.Value;
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-            
-            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+            var authResult = CheckDoctorAuthorization(out string userId, out Doctor? _);
+            if (authResult is UnauthorizedObjectResult)
+                return authResult;
 
             var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
             if (appt == null) return NotFound();
@@ -125,11 +172,9 @@ namespace MedicareApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAppointment([FromRoute] string id)
         {
-            var userId = User.FindFirst("uid")?.Value;
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-            
-            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+            var authResult = CheckDoctorAuthorization(out string userId, out Doctor? _);
+            if (authResult is UnauthorizedObjectResult)
+                return authResult;
 
             var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
             if (appt == null) return NotFound();
