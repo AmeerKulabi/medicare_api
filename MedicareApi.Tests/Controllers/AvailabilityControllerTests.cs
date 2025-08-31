@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Xunit;
 
 namespace MedicareApi.Tests.Controllers
@@ -13,11 +15,13 @@ namespace MedicareApi.Tests.Controllers
     {
         private readonly TestFixture _fixture;
         private readonly ApplicationDbContext _context;
+        private readonly Mock<ILogger<AvailabilityController>> _loggerMock;
 
         public AvailabilityControllerTests(TestFixture fixture)
         {
             _fixture = fixture;
             _context = CreateTestDbContext();
+            _loggerMock = new Mock<ILogger<AvailabilityController>>();
             SeedTestData().Wait();
         }
 
@@ -72,7 +76,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAvailability_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContextWithoutAuth(controller);
 
             // Act
@@ -86,7 +90,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAvailability_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -100,7 +104,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAvailability_DoctorNotFound_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "non-existent-user", true);
 
             // Act
@@ -114,7 +118,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAvailability_ValidDoctor_ReturnsExistingSlots()
         {
             // Arrange
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -142,7 +146,7 @@ namespace MedicareApi.Tests.Controllers
             _context.Doctors.Add(newDoctor);
             await _context.SaveChangesAsync();
 
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "new-doctor-user-id", true);
 
             // Act
@@ -165,7 +169,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctorAvailability_ValidDoctorId_ReturnsSlots()
         {
             // Arrange
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctorAvailability("test-doctor-id");
@@ -192,7 +196,7 @@ namespace MedicareApi.Tests.Controllers
             _context.Doctors.Add(newDoctor);
             await _context.SaveChangesAsync();
 
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctorAvailability("another-doctor-id");
@@ -207,7 +211,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAvailabilitySlot_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContextWithoutAuth(controller);
             var update = new AvailabilitySlot
             {
@@ -227,7 +231,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAvailabilitySlot_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "patient-user-id", false);
             var update = new AvailabilitySlot
             {
@@ -247,7 +251,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAvailabilitySlot_DoctorNotFound_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "non-existent-user", true);
             var update = new AvailabilitySlot
             {
@@ -267,7 +271,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAvailabilitySlot_SlotNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
             var update = new AvailabilitySlot
             {
@@ -311,7 +315,7 @@ namespace MedicareApi.Tests.Controllers
             _context.AvailabilitySlots.Add(anotherSlot);
             await _context.SaveChangesAsync();
 
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true); // Different doctor
 
             var update = new AvailabilitySlot
@@ -332,7 +336,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAvailabilitySlot_ValidUpdate_UpdatesSuccessfully()
         {
             // Arrange
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
             var update = new AvailabilitySlot
             {
@@ -363,7 +367,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAvailabilitySlot_PartialUpdate_UpdatesOnlySpecifiedFields()
         {
             // Arrange
-            var controller = new AvailabilityController(_context);
+            var controller = new AvailabilityController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
             
             // Get original values

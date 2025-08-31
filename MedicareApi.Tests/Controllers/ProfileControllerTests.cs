@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Xunit;
 
 namespace MedicareApi.Tests.Controllers
@@ -14,11 +16,13 @@ namespace MedicareApi.Tests.Controllers
     {
         private readonly TestFixture _fixture;
         private readonly ApplicationDbContext _context;
+        private readonly Mock<ILogger<ProfileController>> _loggerMock;
 
         public ProfileControllerTests(TestFixture fixture)
         {
             _fixture = fixture;
             _context = CreateTestDbContext();
+            _loggerMock = new Mock<ILogger<ProfileController>>();
             SeedTestData().Wait();
         }
 
@@ -59,7 +63,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetProfile_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContextWithoutAuth(controller);
 
             // Act
@@ -73,7 +77,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetProfile_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -87,7 +91,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetProfile_DoctorNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "non-existent-doctor", true);
 
             // Act
@@ -101,7 +105,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetProfile_ValidDoctor_ReturnsProfile()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -120,7 +124,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateProfile_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContextWithoutAuth(controller);
             var updateDto = new ProfileUpdateDto
             {
@@ -138,7 +142,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateProfile_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "patient-user-id", false);
             var updateDto = new ProfileUpdateDto
             {
@@ -156,7 +160,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateProfile_DoctorNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "non-existent-doctor", true);
             var updateDto = new ProfileUpdateDto
             {
@@ -174,7 +178,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateProfile_ValidUpdate_UpdatesSuccessfully()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
             var updateDto = new ProfileUpdateDto
             {
@@ -210,7 +214,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateProfile_PartialUpdate_UpdatesOnlySpecifiedFields()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
             
             // Get original values
@@ -250,7 +254,7 @@ namespace MedicareApi.Tests.Controllers
             _context.Doctors.Add(incompleteDoctor);
             await _context.SaveChangesAsync();
 
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "incomplete-doctor-user-id", true);
             var updateDto = new ProfileUpdateDto
             {
@@ -275,7 +279,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContextWithoutAuth(controller);
             var file = CreateMockFormFile("test.jpg", "image/jpeg");
 
@@ -290,7 +294,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "patient-user-id", false);
             var file = CreateMockFormFile("test.jpg", "image/jpeg");
 
@@ -305,7 +309,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_DoctorNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "non-existent-doctor", true);
             var file = CreateMockFormFile("test.jpg", "image/jpeg");
 
@@ -320,7 +324,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_NullFile_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -334,7 +338,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_EmptyFile_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
             var file = CreateMockFormFile("", "image/jpeg", 0); // Empty file
 
@@ -349,7 +353,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_InvalidFileType_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
             var file = CreateMockFormFile("test.txt", "text/plain");
 
@@ -364,7 +368,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_FileTooLarge_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
             var file = CreateMockFormFile("large.jpg", "image/jpeg", 6 * 1024 * 1024); // 6MB file
 
@@ -391,7 +395,7 @@ namespace MedicareApi.Tests.Controllers
             _context.Doctors.Add(incompleteDoctor);
             await _context.SaveChangesAsync();
 
-            var controller = new ProfileController(_context);
+            var controller = new ProfileController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "inactive-doctor-user-id", true);
             var updateDto = new ProfileUpdateDto
             {

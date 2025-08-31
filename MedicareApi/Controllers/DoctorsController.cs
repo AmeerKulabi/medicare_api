@@ -13,10 +13,12 @@ namespace MedicareApi.Controllers
     public class DoctorsController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private readonly ILogger<DoctorsController> _logger;
 
-        public DoctorsController(ApplicationDbContext db)
+        public DoctorsController(ApplicationDbContext db, ILogger<DoctorsController> logger)
         {
             _db = db;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -50,13 +52,25 @@ namespace MedicareApi.Controllers
             // Example: Save files to disk or database, insert data, etc.
             string userId = User.FindFirstValue("uid");
             string isDoctor = User.FindFirstValue("isDoctor");
-            if (string.IsNullOrEmpty(isDoctor) || isDoctor == "False") return Unauthorized();
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-            //if (User.Claims.FirstOrDefault( a => a.));
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogWarning("Unauthorized access attempt: Missing user ID in JWT token");
+                return Unauthorized(new { error = "Unauthorized: Valid user token required." });
+            }
+            
+            if (string.IsNullOrEmpty(isDoctor) || isDoctor == "False")
+            {
+                _logger.LogWarning("Unauthorized access attempt: User {UserId} is not a doctor accessing doctor info update", userId);
+                return Unauthorized(new { error = "Unauthorized: doctor access required." });
+            }
             
             Doctor doctor = _db.Doctors.FirstOrDefault(d => d.UserId == userId);
             if (doctor == null)
-                return NotFound();
+            {
+                _logger.LogWarning("Unauthorized access attempt: Doctor record not found for user {UserId}", userId);
+                return Unauthorized(new { error = "Unauthorized: doctor profile not found." });
+            }
 
             // Handle profile picture upload if provided
             if (profilePicture != null && profilePicture.Length > 0)

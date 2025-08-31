@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Xunit;
 
 namespace MedicareApi.Tests.Controllers
@@ -13,11 +15,13 @@ namespace MedicareApi.Tests.Controllers
     {
         private readonly TestFixture _fixture;
         private readonly ApplicationDbContext _context;
+        private readonly Mock<ILogger<DoctorsController>> _loggerMock;
 
         public DoctorsControllerTests(TestFixture fixture)
         {
             _fixture = fixture;
             _context = CreateTestDbContext();
+            _loggerMock = new Mock<ILogger<DoctorsController>>();
             SeedTestData().Wait();
         }
 
@@ -74,7 +78,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithoutFilters_ReturnsAllDoctors()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctors(null, null, null, null);
@@ -89,7 +93,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithSpecializationFilter_ReturnsFilteredDoctors()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctors("Cardiology", null, null, null);
@@ -105,7 +109,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithLocationFilter_ReturnsFilteredDoctors()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctors(null, "Basra", null, null);
@@ -121,7 +125,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithSearchFilter_ReturnsMatchingDoctors()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctors(null, null, null, "John");
@@ -137,7 +141,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithSpecializationSearch_ReturnsMatchingDoctors()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctors(null, null, null, "Dermatology");
@@ -153,7 +157,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctorById_ValidId_ReturnsDoctor()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctorById("doctor-1");
@@ -168,7 +172,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctorById_InvalidId_ReturnsNotFound()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctorById("invalid-id");
@@ -181,7 +185,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateDoctorInfo_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
             SetupControllerContextWithoutAuth(controller);
             var formData = new DoctorRegistrationInfo
             {
@@ -199,7 +203,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateDoctorInfo_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "patient-user-id", false);
             var formData = new DoctorRegistrationInfo
             {
@@ -217,7 +221,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateDoctorInfo_DoctorNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "non-existent-user", true);
             var formData = new DoctorRegistrationInfo
             {
@@ -235,7 +239,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateDoctorInfo_ValidDoctor_UpdatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
             SetupControllerContext(controller, "user-1", true);
             var formData = new DoctorRegistrationInfo
             {
@@ -268,7 +272,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_EnsuresDefaultProfilePicture()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
 
             // Act  
             var result = await controller.GetDoctors(null, null, null, null);
@@ -286,7 +290,7 @@ namespace MedicareApi.Tests.Controllers
         {
             // Arrange
             var emptyContext = CreateTestDbContext(); // Fresh context without data
-            var controller = new DoctorsController(emptyContext);
+            var controller = new DoctorsController(emptyContext, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctors(null, null, null, null);
@@ -301,7 +305,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_MultipleFilters_ReturnsCorrectResults()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctors("Cardiology", "Baghdad", null, null);
@@ -317,7 +321,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_NoMatchingResults_ReturnsEmptyList()
         {
             // Arrange
-            var controller = new DoctorsController(_context);
+            var controller = new DoctorsController(_context, _loggerMock.Object);
 
             // Act
             var result = await controller.GetDoctors("NonExistentSpecialization", null, null, null);

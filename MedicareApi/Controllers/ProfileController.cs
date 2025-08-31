@@ -15,21 +15,47 @@ namespace MedicareApi.Controllers
     public class ProfileController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private readonly ILogger<ProfileController> _logger;
 
-        public ProfileController(ApplicationDbContext db)
+        public ProfileController(ApplicationDbContext db, ILogger<ProfileController> logger)
         {
             _db = db;
+            _logger = logger;
+        }
+
+        private IActionResult CheckDoctorAuthorization(out string userId)
+        {
+            userId = User.FindFirst("uid")?.Value ?? "";
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogWarning("Unauthorized access attempt: Missing user ID in JWT token");
+                return Unauthorized(new { error = "Unauthorized: Valid user token required." });
+            }
+
+            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+            if (!isDoctor)
+            {
+                _logger.LogWarning("Unauthorized access attempt: User {UserId} is not a doctor accessing profile", userId);
+                return Unauthorized(new { error = "Unauthorized: doctor access required." });
+            }
+
+            return Ok(); // Will be ignored, just used for method signature
         }
 
         [HttpGet]
         public async Task<IActionResult> GetProfile()
         {
-            var userId = User.FindFirst("uid")?.Value;
-            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+            var authResult = CheckDoctorAuthorization(out string userId);
+            if (authResult is UnauthorizedObjectResult)
+                return authResult;
 
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return NotFound();
+            if (doctor == null)
+            {
+                _logger.LogWarning("Unauthorized access attempt: Doctor record not found for user {UserId}", userId);
+                return Unauthorized(new { error = "Unauthorized: doctor profile not found." });
+            }
 
             // Ensure profile picture URL includes default if none set
             doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
@@ -40,12 +66,16 @@ namespace MedicareApi.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateProfile([FromBody] ProfileUpdateDto updateDto)
         {
-            var userId = User.FindFirst("uid")?.Value;
-            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+            var authResult = CheckDoctorAuthorization(out string userId);
+            if (authResult is UnauthorizedObjectResult)
+                return authResult;
 
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return NotFound();
+            if (doctor == null)
+            {
+                _logger.LogWarning("Unauthorized access attempt: Doctor record not found for user {UserId}", userId);
+                return Unauthorized(new { error = "Unauthorized: doctor profile not found." });
+            }
 
             // Only update allowed fields - restrict to specific properties only
             if (updateDto.Email != null) doctor.Email = updateDto.Email;
@@ -83,12 +113,16 @@ namespace MedicareApi.Controllers
         [HttpPost("upload-picture")]
         public async Task<IActionResult> UploadProfilePicture(IFormFile profilePicture)
         {
-            var userId = User.FindFirst("uid")?.Value;
-            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+            var authResult = CheckDoctorAuthorization(out string userId);
+            if (authResult is UnauthorizedObjectResult)
+                return authResult;
 
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return NotFound();
+            if (doctor == null)
+            {
+                _logger.LogWarning("Unauthorized access attempt: Doctor record not found for user {UserId}", userId);
+                return Unauthorized(new { error = "Unauthorized: doctor profile not found." });
+            }
 
             if (profilePicture == null || profilePicture.Length == 0)
                 return BadRequest("No file uploaded");
