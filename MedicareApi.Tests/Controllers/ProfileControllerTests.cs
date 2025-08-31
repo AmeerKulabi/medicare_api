@@ -375,6 +375,67 @@ namespace MedicareApi.Tests.Controllers
             Assert.IsType<BadRequestObjectResult>(result);
         }
 
+        [Theory]
+        [InlineData("malware.exe", "image/jpeg")]
+        [InlineData("script.js", "image/jpeg")]
+        [InlineData("batch.bat", "image/jpeg")]
+        [InlineData("command.cmd", "image/jpeg")]
+        [InlineData("visual.vbs", "image/jpeg")]
+        [InlineData("page.asp", "image/jpeg")]
+        [InlineData("webapp.aspx", "image/jpeg")]
+        [InlineData("site.php", "image/jpeg")]
+        [InlineData("shell.sh", "image/jpeg")]
+        [InlineData("powershell.ps1", "image/jpeg")]
+        [InlineData("registry.reg", "image/jpeg")]
+        [InlineData("java.jar", "image/jpeg")]
+        [InlineData("python.py", "image/jpeg")]
+        [InlineData("ruby.rb", "image/jpeg")]
+        [InlineData("perl.pl", "image/jpeg")]
+        public async Task UploadProfilePicture_DangerousFileExtensions_ReturnsBadRequest(string filename, string contentType)
+        {
+            // Arrange
+            var controller = new ProfileController(_context);
+            SetupControllerContext(controller, "doctor-user-id", true);
+            // Use valid image content type but dangerous filename extension
+            var file = CreateMockFormFile(filename, contentType);
+
+            // Act
+            var result = await controller.UploadProfilePicture(file);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            var errorMessage = badRequestResult.Value?.ToString();
+            Assert.Contains("not allowed for security reasons", errorMessage);
+        }
+
+        [Theory]
+        [InlineData("safe../file.jpg")]
+        [InlineData("path\\traversal.jpg")]
+        [InlineData("file<script>.jpg")]
+        [InlineData("file|pipe.jpg")]
+        [InlineData("file:colon.jpg")]
+        [InlineData("file\"quote.jpg")]
+        [InlineData("file*star.jpg")]
+        [InlineData("file?question.jpg")]
+        public async Task UploadProfilePicture_UnsafeFilenames_SanitizesAndSucceeds(string unsafeFilename)
+        {
+            // Arrange
+            var controller = new ProfileController(_context);
+            SetupControllerContext(controller, "doctor-user-id", true);
+            var file = CreateMockFormFile(unsafeFilename, "image/jpeg");
+
+            // Act
+            var result = await controller.UploadProfilePicture(file);
+
+            // Assert
+            // The upload should succeed since we sanitize the filename and the file extension is allowed
+            // In a real scenario, this would save the file with a sanitized name
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            // Verify the response contains a profile picture URL
+            dynamic? response = okResult.Value;
+            Assert.NotNull(response?.profilePictureUrl);
+        }
+
         [Fact]
         public async Task UpdateProfile_InDebugMode_SetsIsActiveTrue()
         {

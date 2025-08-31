@@ -25,21 +25,21 @@ namespace MedicareApi.Utils
             if (file.Length > MaxFileSizeInBytes)
                 return (false, null, "File size too large. Maximum size is 5MB.");
 
-            // Additional security: validate file extension
-            var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+            // Enhanced security: validate filename using FileUploadSecurityHelper
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
-                return (false, null, "Invalid file extension. Only JPG, JPEG, PNG, and GIF extensions are allowed.");
+            var filenameValidation = FileUploadSecurityHelper.ValidateFilename(file.FileName, allowedExtensions);
+            if (!filenameValidation.isValid)
+                return (false, null, filenameValidation.errorMessage);
 
-            // Sanitize filename to prevent path traversal
-            var sanitizedDoctorId = System.Text.RegularExpressions.Regex.Replace(doctorId, @"[^a-zA-Z0-9_-]", "");
+            // Sanitize doctor ID to prevent path traversal
+            var sanitizedDoctorId = FileUploadSecurityHelper.SanitizeFilename(doctorId);
             if (string.IsNullOrEmpty(sanitizedDoctorId))
                 return (false, null, "Invalid doctor ID");
 
             try
             {
-                // Generate unique filename
-                var fileName = $"{sanitizedDoctorId}_{Guid.NewGuid()}{extension}";
+                // Generate secure filename using the security helper
+                var fileName = FileUploadSecurityHelper.GenerateSecureFilename(file.FileName, sanitizedDoctorId, true);
                 var directoryPath = Path.Combine("wwwroot", ProfilePicturesDirectory);
                 var filePath = Path.Combine(directoryPath, fileName);
 
