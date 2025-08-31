@@ -73,9 +73,13 @@ public string Email { get; set; } = string.Empty;
 
 ### File Upload Security
 - **Allowed Types**: JPEG, JPG, PNG, GIF only
-- **Size Limits**: Maximum 5MB per file
+- **Size Limits**: Maximum 5MB per file  
 - **Path Validation**: Prevent directory traversal attacks
 - **Content Validation**: Verify file headers match extensions
+- **Filename Sanitization**: Remove unsafe characters and path traversal sequences from filenames
+- **Extension Blocking**: Block dangerous executable extensions (.exe, .js, .bat, .vbs, .asp, .php, etc.)
+- **Execution Prevention**: Web.config files prevent script execution in upload directories
+- **Secure File Naming**: Generate secure filenames with sanitized user input and unique identifiers
 
 ### SQL Injection Prevention
 - **Entity Framework**: Use parameterized queries and LINQ
