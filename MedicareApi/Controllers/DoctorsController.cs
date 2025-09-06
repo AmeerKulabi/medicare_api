@@ -58,35 +58,39 @@ namespace MedicareApi.Controllers
             // Get total count before sorting to avoid EF translation issues with ParseExperience
             var totalCount = await query.CountAsync();
 
-            // Apply sorting - only by experience (remove rating/distance sorting)
+            // Fetch filtered data without sorting to avoid EF translation issues with ParseExperience
+            var allFilteredDoctors = await query.ToListAsync();
+
+            // Apply sorting in memory - only by experience (remove rating/distance sorting)
+            IEnumerable<Doctor> sortedDoctors;
             if (!string.IsNullOrEmpty(sortBy))
             {
                 switch (sortBy.ToLower())
                 {
                     case "experience":
                     case "experience_desc":
-                        query = query.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
+                        sortedDoctors = allFilteredDoctors.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
                         break;
                     case "experience_asc":
-                        query = query.OrderBy(d => ParseExperience(d.YearsOfExperience));
+                        sortedDoctors = allFilteredDoctors.OrderBy(d => ParseExperience(d.YearsOfExperience));
                         break;
                     default:
                         // Default sort by experience descending
-                        query = query.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
+                        sortedDoctors = allFilteredDoctors.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
                         break;
                 }
             }
             else
             {
                 // Default sort by experience descending
-                query = query.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
+                sortedDoctors = allFilteredDoctors.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
             }
 
-            // Apply pagination
-            var doctors = await query
+            // Apply pagination to sorted data
+            var doctors = sortedDoctors
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync();
+                .ToList();
 
             // Ensure all doctors have profile picture URLs (default if none set)
             foreach (var doctor in doctors)
