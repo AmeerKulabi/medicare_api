@@ -55,6 +55,9 @@ namespace MedicareApi.Controllers
                 }
             }
 
+            // Get total count before sorting to avoid EF translation issues with ParseExperience
+            var totalCount = await query.CountAsync();
+
             // Apply sorting - only by experience (remove rating/distance sorting)
             if (!string.IsNullOrEmpty(sortBy))
             {
@@ -78,9 +81,6 @@ namespace MedicareApi.Controllers
                 // Default sort by experience descending
                 query = query.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
             }
-
-            // Get total count before pagination
-            var totalCount = await query.CountAsync();
 
             // Apply pagination
             var doctors = await query
