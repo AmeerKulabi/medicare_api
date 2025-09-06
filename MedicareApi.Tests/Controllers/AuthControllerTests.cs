@@ -2,8 +2,10 @@ using MedicareApi.Controllers;
 using MedicareApi.Data;
 using MedicareApi.Models;
 using MedicareApi.ViewModels;
+using MedicareApi.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +15,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Xunit;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Hosting;
 using RegisterRequest = MedicareApi.ViewModels.RegisterRequest;
 using LoginRequest = MedicareApi.ViewModels.LoginRequest;
 
@@ -75,8 +77,30 @@ namespace MedicareApi.Tests.Controllers
                 Mock.Of<IUserStore<ApplicationUser>>(), null, null, null, null, null, null, null, null).Object;
             var signInManager = new Mock<SignInManager<ApplicationUser>>(
                 um, Mock.Of<IHttpContextAccessor>(), Mock.Of<IUserClaimsPrincipalFactory<ApplicationUser>>(), null, null, null, null);
+            var emailService = new Mock<IEmailService>();
             
-            return new AuthController(um, signInManager.Object, _configurationMock.Object, _context);
+            var controller = new AuthController(um, signInManager.Object, _configurationMock.Object, _context, emailService.Object);
+            
+            // Setup HTTP context for URL generation
+            var httpContext = new Mock<HttpContext>();
+            var request = new Mock<HttpRequest>();
+            request.Setup(r => r.Scheme).Returns("https");
+            request.Setup(r => r.Host).Returns(new HostString("localhost"));
+            httpContext.Setup(c => c.Request).Returns(request.Object);
+            
+            var controllerContext = new ControllerContext
+            {
+                HttpContext = httpContext.Object
+            };
+            controller.ControllerContext = controllerContext;
+            
+            // Setup URL helper
+            var urlHelper = new Mock<IUrlHelper>();
+            urlHelper.Setup(u => u.Action(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+                .Returns("https://localhost/confirm-email?userId=test&token=test");
+            controller.Url = urlHelper.Object;
+            
+            return controller;
         }
 
         private void SetupConfiguration()
@@ -92,7 +116,7 @@ namespace MedicareApi.Tests.Controllers
         }
 
         [Fact]
-        public async Task Register_ValidInput_ReturnsOkWithToken()
+        public async Task Register_ValidInput_ReturnsOkWithConfirmationMessage()
         {
             // Arrange
             var userStore = new Mock<IUserStore<ApplicationUser>>();
@@ -101,6 +125,9 @@ namespace MedicareApi.Tests.Controllers
 
             userManager.Setup(um => um.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
                 .ReturnsAsync(IdentityResult.Success);
+
+            userManager.Setup(um => um.GenerateEmailConfirmationTokenAsync(It.IsAny<ApplicationUser>()))
+                .ReturnsAsync("sample-token");
 
             var controller = CreateAuthController(userManager.Object);
 
@@ -118,9 +145,13 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<RegisterResponse>(okResult.Value);
-            Assert.NotEmpty(response.Token);
-            Assert.False(response.IsDoctor);
+            var response = okResult.Value;
+            Assert.NotNull(response);
+            // Check that the response contains the message and userId
+            var messageProperty = response.GetType().GetProperty("message");
+            Assert.NotNull(messageProperty);
+            var message = messageProperty.GetValue(response) as string;
+            Assert.Contains("check your email", message);
         }
 
         [Fact]
@@ -229,6 +260,8 @@ namespace MedicareApi.Tests.Controllers
                 .ReturnsAsync(user);
             userManager.Setup(um => um.CheckPasswordAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
+            userManager.Setup(um => um.IsEmailConfirmedAsync(It.IsAny<ApplicationUser>()))
+                .ReturnsAsync(true);
 
             var controller = CreateAuthController(userManager.Object);
 
@@ -332,6 +365,8 @@ namespace MedicareApi.Tests.Controllers
                 .ReturnsAsync(user);
             userManager.Setup(um => um.CheckPasswordAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
+            userManager.Setup(um => um.IsEmailConfirmedAsync(It.IsAny<ApplicationUser>()))
+                .ReturnsAsync(true);
 
             var controller = CreateAuthController(userManager.Object);
 
@@ -368,6 +403,8 @@ namespace MedicareApi.Tests.Controllers
 
             userManager.Setup(um => um.FindByEmailAsync(It.IsAny<string>()))
                 .ReturnsAsync(user);
+            userManager.Setup(um => um.IsEmailConfirmedAsync(It.IsAny<ApplicationUser>()))
+                .ReturnsAsync(true);
             userManager.Setup(um => um.CheckPasswordAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
 

@@ -1,15 +1,17 @@
 ﻿using MedicareApi.Data;
 using MedicareApi.Models;
 using MedicareApi.ViewModels;
+using MedicareApi.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Numerics;
 using System.Security.Claims;
 using System.Text;
+using System.Web;
 
 namespace MedicareApi.Controllers
 {
@@ -41,19 +43,26 @@ namespace MedicareApi.Controllers
         private readonly ApplicationDbContext _db;
 
         /// <summary>
+        /// Email service.
+        /// </summary>
+        private readonly IEmailService _emailService;
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="userManager">Identity framework, user manager.</param>
         /// <param name="signInManager">Identity framework, sign in manager.</param>
         /// <param name="configuration">Configuration mananger.</param>
         /// <param name="db">Access db.</param>
+        /// <param name="emailService">Email service.</param>
         public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration,
-            ApplicationDbContext db)
+            ApplicationDbContext db, IEmailService emailService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _db = db;
+            _emailService = emailService;
         }
 
         /// <summary>
@@ -75,7 +84,8 @@ namespace MedicareApi.Controllers
                 Email = model.Email,
                 FullName = model.FullName,
                 IsDoctor = model.IsDoctor,
-                Phone = model.Phone
+                Phone = model.Phone,
+                EmailConfirmed = false
             };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
@@ -93,33 +103,24 @@ namespace MedicareApi.Controllers
                     RegistrationCompleted = false
                 };
                 _db.Doctors.Add(newDoctor);
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
             }
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Email),
-                new Claim("uid", user.Id),
-                new Claim("isDoctor", user.IsDoctor.ToString())
-            };
-            
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] 
-                ?? throw new InvalidOperationException("JWT key not configured")));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            // Generate email confirmation token
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = HttpUtility.UrlEncode(token);
+            var confirmationLink = Url.Action(
+                "ConfirmEmail", "Auth",
+                new { userId = user.Id, token = encodedToken },
+                Request.Scheme);
 
-            var minutesStr = _configuration["Jwt:AccessTokenExpirationMinutes"];
-            var minutes = int.TryParse(minutesStr, out var m) ? m : 10;
-            var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"] ?? "medicare.app",
-            audience: null,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(minutes),
-            signingCredentials: creds
-            );
+            // Send confirmation email
+            await _emailService.SendEmailConfirmationAsync(model.Email, confirmationLink!);
 
-            // Additional doctor profile creation logic can go here
-            return Ok(new RegisterResponse { UserId = user.Id, IsActive = false, RegistrationCompleted = false,
-                Token = new JwtSecurityTokenHandler().WriteToken(token), IsDoctor = user.IsDoctor });
+            return Ok(new { 
+                message = "Registration successful. Please check your email to confirm your account.",
+                userId = user.Id 
+            });
         }
 
         [HttpPost("login")]
@@ -137,6 +138,12 @@ namespace MedicareApi.Controllers
 
                 var passwordValid = await _userManager.CheckPasswordAsync(user, model.Password);
                 if (!passwordValid) return new UnauthorizedObjectResult("Invalid password");
+
+                // Check if email is confirmed
+                if (!await _userManager.IsEmailConfirmedAsync(user))
+                {
+                    return BadRequest(new { message = "Email not confirmed. Please check your email for confirmation link." });
+                }
 
                 var claims = new List<Claim>
                 {
@@ -190,6 +197,199 @@ namespace MedicareApi.Controllers
                 Console.WriteLine(e);
                 return BadRequest();
             }
+        }
+
+        /// <summary>
+        /// Confirms user email address.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(EmailConfirmationRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByIdAsync(request.UserId);
+            if (user == null)
+            {
+                return BadRequest(new { message = "Invalid user ID" });
+            }
+
+            var result = await _userManager.ConfirmEmailAsync(user, request.Token);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { message = "Invalid or expired token" });
+            }
+
+            return Ok(new { message = "Email confirmed successfully. You can now log in." });
+        }
+
+        /// <summary>
+        /// Confirms user email address via GET (for email links).
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [HttpGet("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+            {
+                return BadRequest(new { message = "Invalid confirmation link" });
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return BadRequest(new { message = "Invalid user ID" });
+            }
+
+            var decodedToken = HttpUtility.UrlDecode(token);
+            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { message = "Invalid or expired token" });
+            }
+
+            return Ok(new { message = "Email confirmed successfully. You can now log in." });
+        }
+
+        /// <summary>
+        /// Resends email confirmation.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("resend-confirmation")]
+        public async Task<IActionResult> ResendConfirmation(ResendConfirmationRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+            {
+                // Don't reveal that the user doesn't exist for security
+                return Ok(new { message = "If a matching account was found, a confirmation email has been sent." });
+            }
+
+            if (await _userManager.IsEmailConfirmedAsync(user))
+            {
+                return BadRequest(new { message = "Email is already confirmed." });
+            }
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = HttpUtility.UrlEncode(token);
+            var confirmationLink = Url.Action(
+                "ConfirmEmail", "Auth",
+                new { userId = user.Id, token = encodedToken },
+                Request.Scheme);
+
+            await _emailService.SendEmailConfirmationAsync(request.Email, confirmationLink!);
+
+            return Ok(new { message = "If a matching account was found, a confirmation email has been sent." });
+        }
+
+        /// <summary>
+        /// Initiates password reset process.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null || !await _userManager.IsEmailConfirmedAsync(user))
+            {
+                // Don't reveal that the user doesn't exist or is not confirmed for security
+                return Ok(new { message = "If a matching account was found, a password reset email has been sent." });
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = HttpUtility.UrlEncode(token);
+            var resetLink = $"{Request.Scheme}://{Request.Host}/reset-password?email={HttpUtility.UrlEncode(user.Email)}&token={encodedToken}";
+
+            await _emailService.SendPasswordResetAsync(request.Email, resetLink);
+
+            return Ok(new { message = "If a matching account was found, a password reset email has been sent." });
+        }
+
+        /// <summary>
+        /// Resets user password using reset token.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+            {
+                return BadRequest(new { message = "Invalid reset request" });
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { 
+                    message = "Failed to reset password", 
+                    errors = result.Errors.Select(e => e.Description) 
+                });
+            }
+
+            return Ok(new { message = "Password reset successfully." });
+        }
+
+        /// <summary>
+        /// Changes user password (requires authentication).
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userId = User.FindFirst("uid")?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { 
+                    message = "Failed to change password", 
+                    errors = result.Errors.Select(e => e.Description) 
+                });
+            }
+
+            return Ok(new { message = "Password changed successfully." });
         }
     }
 }

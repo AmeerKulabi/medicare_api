@@ -146,6 +146,15 @@ options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(
 ```bash
 # Set JWT secret in user secrets
 dotnet user-secrets set "Jwt:Key" "$(openssl rand -base64 32)"
+
+# Set SMTP configuration in user secrets
+dotnet user-secrets set "SmtpSettings:Host" "smtp.gmail.com"
+dotnet user-secrets set "SmtpSettings:Port" "587"
+dotnet user-secrets set "SmtpSettings:Username" "your-email@gmail.com"
+dotnet user-secrets set "SmtpSettings:Password" "your-app-password"
+dotnet user-secrets set "SmtpSettings:EnableSsl" "true"
+dotnet user-secrets set "SmtpSettings:FromEmail" "your-email@gmail.com"
+dotnet user-secrets set "SmtpSettings:FromName" "Medicare API"
 ```
 
 #### Production
@@ -153,7 +162,52 @@ dotnet user-secrets set "Jwt:Key" "$(openssl rand -base64 32)"
 # Environment variables
 export JWT_SECRET_KEY="<secure-256-bit-base64-key>"
 export ASPNETCORE_ENVIRONMENT="Production"
+
+# SMTP configuration
+export SMTP_HOST="smtp.your-provider.com"
+export SMTP_PORT="587"
+export SMTP_USERNAME="your-email@your-domain.com"
+export SMTP_PASSWORD="your-secure-app-password"
+export SMTP_ENABLE_SSL="true"
+export SMTP_FROM_EMAIL="noreply@your-domain.com"
+export SMTP_FROM_NAME="Medicare API"
 ```
+
+### SMTP Email Configuration
+
+#### Supported Email Providers
+The API supports any SMTP provider. Common configurations:
+
+**Gmail:**
+- Host: `smtp.gmail.com`
+- Port: `587`
+- Enable SSL: `true`
+- Use App Password instead of regular password
+
+**SendGrid:**
+- Host: `smtp.sendgrid.net`
+- Port: `587`
+- Username: `apikey`
+- Password: Your SendGrid API key
+
+**Outlook/Hotmail:**
+- Host: `smtp.live.com`
+- Port: `587`
+- Enable SSL: `true`
+
+#### SMTP Security Best Practices
+1. **Use App Passwords**: For Gmail, generate an app-specific password
+2. **Store Credentials Securely**: Use user secrets (dev) or environment variables (production)
+3. **Enable SSL/TLS**: Always use encrypted connections
+4. **Rate Limiting**: Be aware of provider sending limits
+5. **Monitoring**: Log email sending success/failure for debugging
+
+#### Email Templates
+The system sends two types of emails:
+- **Email Confirmation**: Sent after registration to verify email address
+- **Password Reset**: Sent when user requests password reset
+
+Templates are embedded in the `SmtpEmailService` but can be moved to external templates for customization.
 
 ### Database Security
 - **Connection Strings**: Store in user secrets or environment variables
