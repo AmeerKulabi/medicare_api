@@ -96,6 +96,27 @@ namespace MedicareApi.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("CanceledAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CanceledBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CancellationReason")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("ConsultationFee")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("DoctorId")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -104,15 +125,17 @@ namespace MedicareApi.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("PaymentId")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Reason")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("ScheduledAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -270,6 +293,41 @@ namespace MedicareApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Doctors");
+                });
+
+            modelBuilder.Entity("MedicareApi.Models.Payment", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AppointmentId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FailureReason")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TransactionReference")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

@@ -99,6 +99,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register custom services
+builder.Services.AddScoped<MedicareApi.Services.IPaymentService, MedicareApi.Services.PaymentService>();
+builder.Services.AddHostedService<MedicareApi.Services.AppointmentStatusService>();
+
 var app = builder.Build();
 
 // Force HTTPS redirection in production
