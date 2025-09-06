@@ -2,7 +2,7 @@ namespace MedicareApi.Models
 {
     public class PaginatedResponse<T>
     {
-        public List<T> Data { get; set; } = new List<T>();
+        public List<T> Doctors { get; set; } = new List<T>();
         public int TotalCount { get; set; }
         public int PageSize { get; set; }
         public int CurrentPage { get; set; }

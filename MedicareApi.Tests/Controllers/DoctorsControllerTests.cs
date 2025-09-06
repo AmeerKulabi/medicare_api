@@ -82,7 +82,7 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value);
-            Assert.Equal(2, response.Data.Count);
+            Assert.Equal(2, response.Doctors.Count);
         }
 
         [Fact]
@@ -96,7 +96,7 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Data;
+            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Doctors;
             Assert.Single(doctors);
             Assert.Equal("Dr. John Smith", doctors.First().Name);
         }
@@ -112,7 +112,7 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Data;
+            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Doctors;
             Assert.Single(doctors);
             Assert.Equal("Dr. Jane Doe", doctors.First().Name);
         }
@@ -128,7 +128,7 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Data;
+            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Doctors;
             Assert.Single(doctors);
             Assert.Equal("Dr. John Smith", doctors.First().Name);
         }
@@ -144,7 +144,7 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Data;
+            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Doctors;
             Assert.Single(doctors);
             Assert.Equal("Dr. Jane Doe", doctors.First().Name);
         }
@@ -283,7 +283,7 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value);
-            var doctors = response.Data;
+            var doctors = response.Doctors;
             
             // All doctors should have a profile picture URL (either set or default)
             Assert.All(doctors, doctor => Assert.NotNull(doctor.ProfilePictureUrl));
@@ -302,7 +302,7 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value);
-            Assert.Empty(response.Data);
+            Assert.Empty(response.Doctors);
         }
 
         [Fact]
@@ -316,7 +316,7 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Data;
+            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Doctors;
             Assert.Single(doctors);
             Assert.Equal("Dr. John Smith", doctors.First().Name);
         }
@@ -332,7 +332,7 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Data;
+            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value); var doctors = response.Doctors;
             Assert.Empty(doctors);
         }
 
@@ -382,7 +382,7 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value);
-            Assert.Single(response.Data);
+            Assert.Single(response.Doctors);
             Assert.Equal(2, response.TotalCount);
             Assert.Equal(1, response.PageSize);
             Assert.Equal(1, response.CurrentPage);
@@ -409,8 +409,8 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value);
-            Assert.Single(response.Data);
-            Assert.Equal("Dr. John Smith", response.Data.First().Name);
+            Assert.Single(response.Doctors);
+            Assert.Equal("Dr. John Smith", response.Doctors.First().Name);
         }
 
         [Fact]
@@ -431,8 +431,8 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value);
-            Assert.Single(response.Data);
-            Assert.Equal("Dr. John Smith", response.Data.First().Name);
+            Assert.Single(response.Doctors);
+            Assert.Equal("Dr. John Smith", response.Doctors.First().Name);
         }
 
         [Fact]
@@ -453,9 +453,9 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value);
-            Assert.Equal(2, response.Data.Count);
-            Assert.Equal("Dr. John Smith", response.Data.First().Name); // 5 years first
-            Assert.Equal("Dr. Jane Doe", response.Data.Last().Name); // 10 years second
+            Assert.Equal(2, response.Doctors.Count);
+            Assert.Equal("Dr. John Smith", response.Doctors.First().Name); // 5 years first
+            Assert.Equal("Dr. Jane Doe", response.Doctors.Last().Name); // 10 years second
         }
 
         [Fact]

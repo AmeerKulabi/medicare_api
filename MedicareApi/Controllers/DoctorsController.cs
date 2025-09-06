@@ -42,18 +42,8 @@ namespace MedicareApi.Controllers
                 query = query.Where(d => d.Location == location);
             if (!string.IsNullOrEmpty(search))
                 query = query.Where(d => d.Name.Contains(search) || d.Specialization.Contains(search));
-
-            // Apply language filtering - doctor must speak ALL selected languages
-            if (languages != null && languages.Any())
-            {
-                foreach (var language in languages)
-                {
-                    if (!string.IsNullOrEmpty(language))
-                    {
-                        query = query.Where(d => d.Languages != null && d.Languages.Contains(language));
-                    }
-                }
-            }
+            if (languages != null && languages.Count > 0)
+                query = query.Where(d => d.Languages.Any(l => languages.Contains(l)));
 
             // Get total count before sorting to avoid EF translation issues with ParseExperience
             var totalCount = await query.CountAsync();
@@ -102,7 +92,7 @@ namespace MedicareApi.Controllers
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
             var response = new PaginatedResponse<Doctor>
             {
-                Data = doctors,
+                Doctors = doctors,
                 TotalCount = totalCount,
                 PageSize = pageSize,
                 CurrentPage = page,
