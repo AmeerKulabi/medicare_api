@@ -1,5 +1,6 @@
 ﻿using MedicareApi.Data;
 using MedicareApi.Models;
+using MedicareApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +13,12 @@ namespace MedicareApi.Controllers
     public class PatientAppointmentController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private readonly IPaymentService _paymentService;
 
-        public PatientAppointmentController(ApplicationDbContext db)
+        public PatientAppointmentController(ApplicationDbContext db, IPaymentService paymentService)
         {
             _db = db;
+            _paymentService = paymentService;
         }
 
         [HttpDelete("{id}")]
@@ -30,9 +33,72 @@ namespace MedicareApi.Controllers
             var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id && a.PatientId == userId);
             if (appt == null) return NotFound();
 
-            _db.Appointments.Remove(appt);
+            // Check if appointment can be canceled by patient (not within 24 hours and not confirmed)
+            var hoursUntilAppointment = (appt.ScheduledAt - DateTime.UtcNow).TotalHours;
+            if (hoursUntilAppointment <= 24 || appt.Status == AppointmentStatus.Confirmed)
+            {
+                return BadRequest("Cannot cancel appointment within 24 hours or when confirmed");
+            }
+
+            if (appt.Status == AppointmentStatus.Done || appt.Status == AppointmentStatus.Canceled)
+            {
+                return BadRequest("Cannot cancel completed or already canceled appointment");
+            }
+
+            appt.Status = AppointmentStatus.Canceled;
+            appt.CanceledAt = DateTime.UtcNow;
+            appt.CanceledBy = userId;
+            appt.CancellationReason = "Canceled by patient";
+
+            // Refund payment if it was processed
+            if (!string.IsNullOrEmpty(appt.PaymentId))
+            {
+                await _paymentService.RefundPaymentAsync(appt.PaymentId);
+            }
+
             await _db.SaveChangesAsync();
             return NoContent();
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdatePatientAppointment([FromRoute] string id, [FromBody] UpdateAppointment updates)
+        {
+            var userId = User.FindFirst("uid")?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            
+            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+            if (isDoctor) return Unauthorized();
+
+            var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id && a.PatientId == userId);
+            if (appt == null) return NotFound();
+
+            // Check if appointment can be modified by patient (not within 24 hours and not confirmed)
+            var hoursUntilAppointment = (appt.ScheduledAt - DateTime.UtcNow).TotalHours;
+            if (hoursUntilAppointment <= 24 || appt.Status == AppointmentStatus.Confirmed)
+            {
+                return BadRequest("Cannot modify appointment within 24 hours or when confirmed");
+            }
+
+            if (appt.Status == AppointmentStatus.Done || appt.Status == AppointmentStatus.Canceled)
+            {
+                return BadRequest("Cannot modify completed or canceled appointment");
+            }
+
+            // Patients can only update certain fields
+            if (updates.ScheduledAt != null)
+                appt.ScheduledAt = (DateTime)updates.ScheduledAt;
+
+            if (updates.Reason != null)
+                appt.Reason = updates.Reason;
+
+            // Patients cannot directly change status except for cancellation (which should use DELETE)
+            if (updates.Status.HasValue && updates.Status != AppointmentStatus.Canceled)
+            {
+                return BadRequest("Patients cannot change appointment status");
+            }
+
+            await _db.SaveChangesAsync();
+            return Ok(appt);
         }
 
         [HttpGet]
@@ -64,7 +130,7 @@ namespace MedicareApi.Controllers
                     time = appointment.ScheduledAt.TimeOfDay.ToString(),
                     duration = 30,
                     reason = appointment.Reason ?? "",
-                    status = appointment.Status,
+                    status = appointment.Status.ToString().ToLower(),
                     type = "consultation",
                     address = doctor.ClinicAddress,
                     phone = doctor.Phone,

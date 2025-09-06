@@ -143,7 +143,7 @@ namespace MedicareApi.Tests
                 Id = "test-appointment-id",
                 PatientId = patientUser.Id,
                 DoctorId = doctor.Id,
-                Status = "confirmed",
+                Status = AppointmentStatus.Confirmed,
                 ScheduledAt = DateTime.Now.AddDays(1),
                 Reason = "Test appointment"
             };

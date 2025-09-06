@@ -1,5 +1,6 @@
 ﻿using MedicareApi.Data;
 using MedicareApi.Models;
+using MedicareApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,13 @@ namespace MedicareApi.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IPaymentService _paymentService;
 
-        public DoctorAppointmentsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public DoctorAppointmentsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager, IPaymentService paymentService)
         {
             _db = db;
             _userManager = userManager;
+            _paymentService = paymentService;
         }
 
         [HttpGet]
@@ -52,7 +55,7 @@ namespace MedicareApi.Controllers
                     time = appointment.ScheduledAt.TimeOfDay.ToString(),
                     duration = "30",
                     reason = appointment.Reason ?? "",
-                    status = "confirmed",
+                    status = appointment.Status.ToString().ToLower(),
                     type = "consultation"
 
                 };
@@ -83,14 +86,23 @@ namespace MedicareApi.Controllers
                 if (appointment.DoctorId != doctor.Id)
                     return Unauthorized();
             }
+            else
+            {
+                // For patients, get the consultation fee from the doctor
+                var doctor = await _db.Doctors.FindAsync(appointment.DoctorId);
+                if (doctor == null) return BadRequest("Doctor not found");
+                
+                appointment.ConsultationFee = decimal.Parse(doctor.ConsultationFee);
+            }
 
             Appointment newAppointment = new Appointment()
             {
                 PatientId = appointment.PatientId,
                 DoctorId = appointment.DoctorId,
-                Status = appointment.Status,
+                Status = AppointmentStatus.Booked,
                 ScheduledAt = appointment.ScheduledAt,
                 Reason = appointment.Reason,
+                ConsultationFee = appointment.ConsultationFee,
             };
             _db.Appointments.Add(newAppointment);
             await _db.SaveChangesAsync();
@@ -109,15 +121,33 @@ namespace MedicareApi.Controllers
             var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
             if (appt == null) return NotFound();
 
-            if(updates.ScheduledAt != null)
-                appt.ScheduledAt = (DateTime)updates.ScheduledAt;
+            // Doctors can always cancel appointments
+            if (updates.Status == AppointmentStatus.Canceled)
+            {
+                appt.Status = AppointmentStatus.Canceled;
+                appt.CanceledAt = DateTime.UtcNow;
+                appt.CanceledBy = userId;
+                appt.CancellationReason = updates.CancellationReason;
 
-            if(updates.Status != null)
-                appt.Status = updates.Status;
+                // Refund payment if it was processed
+                if (!string.IsNullOrEmpty(appt.PaymentId))
+                {
+                    await _paymentService.RefundPaymentAsync(appt.PaymentId);
+                }
+            }
+            else
+            {
+                // Other updates
+                if (updates.ScheduledAt != null)
+                    appt.ScheduledAt = (DateTime)updates.ScheduledAt;
 
-            if(updates.Reason != null)
-                appt.Reason = updates.Reason;
-            // Update more fields as needed
+                if (updates.Status != null)
+                    appt.Status = (AppointmentStatus)updates.Status;
+
+                if (updates.Reason != null)
+                    appt.Reason = updates.Reason;
+            }
+            
             await _db.SaveChangesAsync();
             return Ok(appt);
         }

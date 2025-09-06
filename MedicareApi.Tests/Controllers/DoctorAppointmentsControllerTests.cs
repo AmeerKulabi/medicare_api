@@ -1,6 +1,7 @@
 using MedicareApi.Controllers;
 using MedicareApi.Data;
 using MedicareApi.Models;
+using MedicareApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -16,12 +17,14 @@ namespace MedicareApi.Tests.Controllers
         private readonly TestFixture _fixture;
         private readonly ApplicationDbContext _context;
         private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
+        private readonly Mock<IPaymentService> _mockPaymentService;
 
         public DoctorAppointmentsControllerTests(TestFixture fixture)
         {
             _fixture = fixture;
             _context = CreateTestDbContext();
             _userManagerMock = CreateUserManagerMock();
+            _mockPaymentService = new Mock<IPaymentService>();
             SeedTestData().Wait();
         }
 
@@ -67,7 +70,7 @@ namespace MedicareApi.Tests.Controllers
                 Id = "appointment-1",
                 PatientId = "patient-user-id",
                 DoctorId = "test-doctor-id",
-                Status = "confirmed",
+                Status = AppointmentStatus.Confirmed,
                 ScheduledAt = DateTime.Now.AddDays(1),
                 Reason = "Checkup"
             };
@@ -77,7 +80,7 @@ namespace MedicareApi.Tests.Controllers
                 Id = "appointment-2",
                 PatientId = "patient-user-id",
                 DoctorId = "test-doctor-id",
-                Status = "pending",
+                Status = AppointmentStatus.Booked,
                 ScheduledAt = DateTime.Now.AddDays(2),
                 Reason = "Follow-up"
             };
@@ -96,7 +99,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAppointments_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContextWithoutAuth(controller);
 
             // Act
@@ -110,7 +113,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAppointments_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -124,7 +127,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAppointments_DoctorNotFound_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "non-existent-user", true);
 
             // Act
@@ -138,7 +141,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAppointments_ValidDoctor_ReturnsAppointments()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -154,13 +157,13 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContextWithoutAuth(controller);
             var appointment = new Appointment
             {
                 PatientId = "patient-user-id",
                 DoctorId = "test-doctor-id",
-                Status = "confirmed",
+                Status = AppointmentStatus.Confirmed,
                 ScheduledAt = DateTime.Now.AddDays(1),
                 Reason = "Test appointment"
             };
@@ -176,14 +179,14 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_UnauthorizedUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "unauthorized-user", false);
             
             var appointment = new Appointment
             {
                 PatientId = "patient-user-id", // Different from current user
                 DoctorId = "test-doctor-id",
-                Status = "confirmed",
+                Status = AppointmentStatus.Confirmed,
                 ScheduledAt = DateTime.Now.AddDays(1),
                 Reason = "Test appointment"
             };
@@ -199,14 +202,14 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_PatientCreatingOwnAppointment_CreatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "patient-user-id", false);
             
             var appointment = new Appointment
             {
                 PatientId = "patient-user-id",
                 DoctorId = "test-doctor-id",
-                Status = "confirmed",
+                Status = AppointmentStatus.Confirmed,
                 ScheduledAt = DateTime.Now.AddDays(3),
                 Reason = "New appointment"
             };
@@ -230,14 +233,14 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_DoctorCreatingAppointment_CreatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
             
             var appointment = new Appointment
             {
                 PatientId = "patient-user-id",
                 DoctorId = "test-doctor-id",
-                Status = "confirmed",
+                Status = AppointmentStatus.Confirmed,
                 ScheduledAt = DateTime.Now.AddDays(3),
                 Reason = "Doctor created appointment"
             };
@@ -256,11 +259,11 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContextWithoutAuth(controller);
             var update = new UpdateAppointment
             {
-                Status = "cancelled"
+                Status = AppointmentStatus.Canceled
             };
 
             // Act
@@ -274,11 +277,11 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "patient-user-id", false);
             var update = new UpdateAppointment
             {
-                Status = "cancelled"
+                Status = AppointmentStatus.Canceled
             };
 
             // Act
@@ -292,11 +295,11 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_AppointmentNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
             var update = new UpdateAppointment
             {
-                Status = "cancelled"
+                Status = AppointmentStatus.Canceled
             };
 
             // Act
@@ -310,12 +313,12 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_ValidUpdate_UpdatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
             var newScheduledTime = DateTime.Now.AddDays(5);
             var update = new UpdateAppointment
             {
-                Status = "rescheduled",
+                Status = AppointmentStatus.Booked,
                 ScheduledAt = newScheduledTime,
                 Reason = "Updated reason"
             };
@@ -326,20 +329,20 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var updatedAppointment = Assert.IsType<Appointment>(okResult.Value);
-            Assert.Equal("rescheduled", updatedAppointment.Status);
+            Assert.Equal(AppointmentStatus.Booked, updatedAppointment.Status);
             Assert.Equal("Updated reason", updatedAppointment.Reason);
 
             // Verify data was persisted
             var dbAppointment = await _context.Appointments.FindAsync("appointment-1");
             Assert.NotNull(dbAppointment);
-            Assert.Equal("rescheduled", dbAppointment.Status);
+            Assert.Equal(AppointmentStatus.Booked, dbAppointment.Status);
         }
 
         [Fact]
         public async Task DeleteAppointment_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContextWithoutAuth(controller);
 
             // Act
@@ -353,7 +356,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeleteAppointment_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -367,7 +370,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeleteAppointment_AppointmentNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -381,7 +384,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeleteAppointment_ValidAppointment_DeletesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Verify appointment exists before deletion
@@ -403,7 +406,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_RequiredFieldsValidation()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, _mockPaymentService.Object);
             SetupControllerContext(controller, "patient-user-id", false);
             
             var appointment = new Appointment
@@ -411,7 +414,7 @@ namespace MedicareApi.Tests.Controllers
                 // Missing required fields
                 PatientId = "patient-user-id",
                 DoctorId = "", // Empty doctor ID
-                Status = "confirmed",
+                Status = AppointmentStatus.Confirmed,
                 ScheduledAt = DateTime.Now.AddDays(1)
             };
 
