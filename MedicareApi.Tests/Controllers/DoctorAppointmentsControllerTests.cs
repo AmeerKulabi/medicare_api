@@ -579,6 +579,108 @@ namespace MedicareApi.Tests.Controllers
             };
         }
 
+        [Fact]
+        public async Task CreateAppointment_WithReasonExceeding500Characters_ReturnsBadRequest()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+
+            // Create a reason that is longer than 500 characters
+            var longReason = new string('x', 501); // 501 characters
+
+            var appointment = new Appointment
+            {
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = longReason
+            };
+
+            // Manually add validation error to ModelState to simulate real validation
+            controller.ModelState.AddModelError("Reason", "Appointment reason must not exceed 500 characters");
+
+            // Act
+            var result = await controller.CreateAppointment(appointment);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task CreateAppointment_WithReasonUnder500Characters_ReturnsOk()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+
+            // Create a reason that is exactly 500 characters
+            var validReason = new string('x', 500); // 500 characters
+
+            var appointment = new Appointment
+            {
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = validReason
+            };
+
+            // Act
+            var result = await controller.CreateAppointment(appointment);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task UpdateAppointment_WithReasonExceeding500Characters_ReturnsBadRequest()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+
+            // Create a reason that is longer than 500 characters
+            var longReason = new string('x', 501); // 501 characters
+
+            var updates = new UpdateAppointment
+            {
+                Reason = longReason
+            };
+
+            // Manually add validation error to ModelState to simulate real validation
+            controller.ModelState.AddModelError("Reason", "Appointment reason must not exceed 500 characters");
+
+            // Act
+            var result = await controller.UpdateAppointment("appointment-1", updates);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task UpdateAppointment_WithReasonUnder500Characters_ReturnsOk()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+
+            // Create a reason that is exactly 500 characters
+            var validReason = new string('x', 500); // 500 characters
+
+            var updates = new UpdateAppointment
+            {
+                Reason = validReason
+            };
+
+            // Act
+            var result = await controller.UpdateAppointment("appointment-1", updates);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+        }
+
         public void Dispose()
         {
             _context?.Dispose();
