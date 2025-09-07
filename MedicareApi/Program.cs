@@ -1,5 +1,6 @@
 using MedicareApi.Data;
 using MedicareApi.Models;
+using MedicareApi.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -72,6 +73,9 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ClockSkew = TimeSpan.Zero // Reduce token expiration tolerance
     };
+
+    // Configure custom JWT error responses
+    JwtAuthenticationConfiguration.ConfigureJwtEvents(options);
 });
 
 // Add rate limiting

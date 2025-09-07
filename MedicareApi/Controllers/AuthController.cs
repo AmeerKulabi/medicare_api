@@ -1,4 +1,4 @@
-﻿using MedicareApi.Data;
+using MedicareApi.Data;
 using MedicareApi.Models;
 using MedicareApi.ViewModels;
 using Microsoft.AspNetCore.Identity;
@@ -67,8 +67,26 @@ namespace MedicareApi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.VALIDATION_ERROR,
+                    Message = "Invalid request data",
+                    Details = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))
+                });
             }
+
+            // Check if user already exists
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
+            {
+                return Conflict(new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.EMAIL_ALREADY_EXISTS,
+                    Message = "An account with this email address already exists",
+                    Details = "Please use a different email address or try logging in instead"
+                });
+            }
+
             var user = new ApplicationUser
             {
                 UserName = model.Email,
@@ -80,7 +98,17 @@ namespace MedicareApi.Controllers
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors);
+                var errors = result.Errors.Select(e => e.Description).ToList();
+                var errorCode = errors.Any(e => e.Contains("password", StringComparison.OrdinalIgnoreCase)) 
+                    ? ErrorCodes.WEAK_PASSWORD 
+                    : ErrorCodes.VALIDATION_ERROR;
+                
+                return BadRequest(new ApiErrorResponse
+                {
+                    ErrorCode = errorCode,
+                    Message = "Registration failed",
+                    Details = string.Join("; ", errors)
+                });
             }
             if (user.IsDoctor)
             {
@@ -127,16 +155,54 @@ namespace MedicareApi.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.VALIDATION_ERROR,
+                    Message = "Invalid request data",
+                    Details = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))
+                });
             }
 
             try
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
-                if (user == null) return new NotFoundObjectResult("User does not exist");
+                if (user == null)
+                {
+                    return NotFound(new ApiErrorResponse
+                    {
+                        ErrorCode = ErrorCodes.USER_NOT_FOUND,
+                        Message = "No account found with this email address",
+                        Details = "Please check your email address or register for a new account"
+                    });
+                }
+
+                // Check if account is locked
+                if (await _userManager.IsLockedOutAsync(user))
+                {
+                    return Unauthorized(new ApiErrorResponse
+                    {
+                        ErrorCode = ErrorCodes.ACCOUNT_LOCKED,
+                        Message = "Account is temporarily locked due to too many failed login attempts",
+                        Details = $"Please try again after {user.LockoutEnd?.ToString("yyyy-MM-dd HH:mm:ss")} UTC"
+                    });
+                }
 
                 var passwordValid = await _userManager.CheckPasswordAsync(user, model.Password);
-                if (!passwordValid) return new UnauthorizedObjectResult("Invalid password");
+                if (!passwordValid)
+                {
+                    // Record failed login attempt for lockout functionality
+                    await _userManager.AccessFailedAsync(user);
+                    
+                    return Unauthorized(new ApiErrorResponse
+                    {
+                        ErrorCode = ErrorCodes.INVALID_PASSWORD,
+                        Message = "Incorrect password",
+                        Details = "Please check your password and try again"
+                    });
+                }
+
+                // Reset failed login count on successful login
+                await _userManager.ResetAccessFailedCountAsync(user);
 
                 var claims = new List<Claim>
                 {
@@ -165,7 +231,12 @@ namespace MedicareApi.Controllers
                     Doctor doctor = _db.Doctors.FirstOrDefault(d => d.UserId == user.Id);
                     if (doctor == null)
                     {
-                        return NotFound("User not found!");
+                        return NotFound(new ApiErrorResponse
+                        {
+                            ErrorCode = ErrorCodes.NOT_FOUND,
+                            Message = "Doctor profile not found",
+                            Details = "Doctor account exists but profile is missing. Please contact support."
+                        });
                     }
                     registrationCompleted = doctor.RegistrationCompleted;
                     isActive = doctor.IsActive;
@@ -187,8 +258,14 @@ namespace MedicareApi.Controllers
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                return BadRequest();
+                // Log the exception (in production, use proper logging)
+                Console.WriteLine($"Login error: {e.Message}");
+                return StatusCode(500, new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.INTERNAL_ERROR,
+                    Message = "An internal error occurred during login",
+                    Details = "Please try again later or contact support if the problem persists"
+                });
             }
         }
     }
