@@ -35,21 +35,27 @@ namespace MedicareApi.Controllers
 
             var query = _db.Doctors.AsQueryable();
 
-            // Apply filters
+            // Apply filters (excluding language filter for now due to EF Core limitation)
             if (!string.IsNullOrEmpty(specialization))
                 query = query.Where(d => d.Specialization == specialization);
             if (!string.IsNullOrEmpty(location))
                 query = query.Where(d => d.Location == location);
             if (!string.IsNullOrEmpty(search))
                 query = query.Where(d => d.Name.Contains(search) || d.Specialization.Contains(search));
-            if (languages != null && languages.Count > 0)
-                query = query.Where(d => d.Languages.Any(l => languages.Contains(l)));
 
-            // Get total count before sorting to avoid EF translation issues with ParseExperience
-            var totalCount = await query.CountAsync();
-
-            // Fetch filtered data without sorting to avoid EF translation issues with ParseExperience
+            // Fetch filtered data without language filter and without sorting to avoid EF translation issues
             var allFilteredDoctors = await query.ToListAsync();
+
+            // Apply language filter in memory due to EF Core in-memory provider limitations
+            if (languages != null && languages.Count > 0)
+            {
+                allFilteredDoctors = allFilteredDoctors
+                    .Where(d => d.Languages != null && languages.All(lang => d.Languages.Contains(lang)))
+                    .ToList();
+            }
+
+            // Get total count after all filters are applied
+            var totalCount = allFilteredDoctors.Count;
 
             // Apply sorting in memory - only by experience (remove rating/distance sorting)
             IEnumerable<Doctor> sortedDoctors;
@@ -139,6 +145,71 @@ namespace MedicareApi.Controllers
             // Ensure profile picture URL includes default if none set
             doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
             
+            return Ok(doctor);
+        }
+
+        [HttpPut]
+        [Authorize]
+        public async Task<IActionResult> UpdateDoctorInfo([FromForm] DoctorRegistrationInfo formData, [FromForm] IFormFile? profilePicture)
+        {
+            var userId = User.FindFirst("uid")?.Value;
+            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+            if (!isDoctor) return Unauthorized();
+
+            var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+            if (doctor == null) return NotFound();
+
+            // Update doctor information from form data
+            doctor.Phone = formData.Phone;
+            doctor.DateOfBirth = formData.DateOfBirth;
+            doctor.Gender = formData.Gender;
+            doctor.MedicalLicense = formData.MedicalLicense;
+            doctor.LicenseState = formData.LicenseState;
+            doctor.LicenseExpiry = formData.LicenseExpiry;
+            doctor.Specialization = formData.Specialization;
+            doctor.SubSpecialization = formData.SubSpecialization;
+            doctor.BoardCertification = formData.BoardCertification;
+            doctor.YearsOfExperience = formData.YearsOfExperience;
+            doctor.MedicalSchool = formData.MedicalSchool;
+            doctor.GraduationYear = formData.GraduationYear;
+            doctor.ResidencyProgram = formData.ResidencyProgram;
+            doctor.ResidencyHospital = formData.ResidencyHospital;
+            doctor.FellowshipProgram = formData.FellowshipProgram;
+            doctor.ClinicName = formData.ClinicName;
+            doctor.ClinicAddress = formData.ClinicAddress;
+            doctor.ClinicCity = formData.ClinicCity;
+            doctor.ClinicState = formData.ClinicState;
+            doctor.ClinicZip = formData.ClinicZip;
+            doctor.ClinicPhone = formData.ClinicPhone;
+            doctor.PracticeType = formData.PracticeType;
+            doctor.HospitalAffiliations = formData.HospitalAffiliations;
+            doctor.ServicesOffered = formData.ServicesOffered;
+            doctor.ConsultationFee = formData.ConsultationFee;
+            doctor.Availability = formData.Availability;
+            doctor.Languages = formData.Languages;
+            doctor.TermsAccepted = formData.TermsAccepted;
+            doctor.PrivacyAccepted = formData.PrivacyAccepted;
+
+            // Mark registration as completed
+            doctor.RegistrationCompleted = true;
+
+            // Handle profile picture upload if provided
+            if (profilePicture != null && profilePicture.Length > 0)
+            {
+                var result = await ProfilePictureHelper.SaveProfilePicture(profilePicture, doctor.Id);
+                if (result.success)
+                {
+                    // Delete old profile picture if exists
+                    ProfilePictureHelper.DeleteProfilePicture(doctor.ProfilePictureUrl);
+                    doctor.ProfilePictureUrl = result.url;
+                }
+            }
+
+            await _db.SaveChangesAsync();
+
+            // Ensure profile picture URL includes default if none set
+            doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
+
             return Ok(doctor);
         }
     }
