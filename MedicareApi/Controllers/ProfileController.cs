@@ -59,6 +59,7 @@ namespace MedicareApi.Controllers
             if (updateDto.ResidencyProgram != null) doctor.ResidencyProgram = updateDto.ResidencyProgram;
             if (updateDto.ResidencyHospital != null) doctor.ResidencyHospital = updateDto.ResidencyHospital;
             if (updateDto.FellowshipProgram != null) doctor.FellowshipProgram = updateDto.FellowshipProgram;
+            if (updateDto.Location != null) doctor.Location = updateDto.Location;
             
             // Hospital and clinic information
             if (updateDto.HospitalAffiliations != null) doctor.HospitalAffiliations = updateDto.HospitalAffiliations;
@@ -66,6 +67,8 @@ namespace MedicareApi.Controllers
             if (updateDto.ClinicAddress != null) doctor.ClinicAddress = updateDto.ClinicAddress;
             if (updateDto.ClinicPhone != null) doctor.ClinicPhone = updateDto.ClinicPhone;
             if (updateDto.ConsultationFee != null) doctor.ConsultationFee = updateDto.ConsultationFee;
+            if (updateDto.YearsOfExperience != null) doctor.YearsOfExperience = updateDto.YearsOfExperience;
+            if (updateDto.Specialization != null) doctor.Specialization = updateDto.Specialization;
             if(!doctor.RegistrationCompleted) doctor.RegistrationCompleted = true;
 
             #if DEBUG

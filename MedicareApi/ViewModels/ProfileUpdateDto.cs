@@ -56,6 +56,13 @@ namespace MedicareApi.ViewModels
         [RegularExpression(@"^\d+(\.\d{1,2})?$", ErrorMessage = "Consultation fee must be a valid amount")]
         [StringLength(20, ErrorMessage = "Consultation fee must not exceed 20 characters")]
         public string? ConsultationFee { get; set; }
+
+        [RegularExpression(@"^\d{1,2}$", ErrorMessage = "Years of experience must be between 0-99 years")]
+        public string? YearsOfExperience { get; set; }
+
+        public string? Specialization {  get; set; }
+
+        public string? Location { get; set; }
         
         // صورة الملف الشخصي (profile picture) - Note: IFormFile is used for multipart uploads
         // This will be handled separately in the controller for multipart/form-data requests
