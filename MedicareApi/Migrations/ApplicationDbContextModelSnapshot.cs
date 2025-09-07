@@ -153,71 +153,14 @@ namespace MedicareApi.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Availability")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("BoardCertification")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ClinicAddress")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ClinicCity")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ClinicName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ClinicPhone")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ClinicState")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ClinicZip")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ConsultationFee")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("DateOfBirth")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("FellowshipProgram")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Gender")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("GraduationYear")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("HospitalAffiliations")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Languages")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LicenseExpiry")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LicenseState")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Location")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("MedicalLicense")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("MedicalSchool")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
@@ -227,44 +170,17 @@ namespace MedicareApi.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PracticeType")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool?>("PrivacyAccepted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ProfessionalBiography")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("ProfilePictureUrl")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("RegistrationCompleted")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("ResidencyHospital")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ResidencyProgram")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ServicesOffered")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Specialization")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("SubSpecialization")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool?>("TermsAccepted")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("YearsOfExperience")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

@@ -5,6 +5,10 @@
 namespace MedicareApi.Migrations
 {
     /// <inheritdoc />
+    /// <summary>
+    /// NOTE: This migration has been superseded by SimplifyDoctorModel migration (20250907141152).
+    /// Many of the fields added here have been removed in the simplified Doctor model.
+    /// </summary>
     public partial class updateusermodel : Migration
     {
         /// <inheritdoc />
