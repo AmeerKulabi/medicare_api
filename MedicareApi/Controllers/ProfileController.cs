@@ -26,10 +26,27 @@ namespace MedicareApi.Controllers
         {
             var userId = User.FindFirst("uid")?.Value;
             var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+            
+            if (!isDoctor)
+            {
+                return Unauthorized(new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.INSUFFICIENT_PERMISSIONS,
+                    Message = "Access denied",
+                    Details = "Only doctors can access profile information"
+                });
+            }
 
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return NotFound();
+            if (doctor == null)
+            {
+                return NotFound(new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.NOT_FOUND,
+                    Message = "Doctor profile not found",
+                    Details = "No doctor profile associated with this account"
+                });
+            }
 
             // Ensure profile picture URL includes default if none set
             doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
@@ -42,10 +59,27 @@ namespace MedicareApi.Controllers
         {
             var userId = User.FindFirst("uid")?.Value;
             var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+            
+            if (!isDoctor)
+            {
+                return Unauthorized(new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.INSUFFICIENT_PERMISSIONS,
+                    Message = "Access denied",
+                    Details = "Only doctors can update profile information"
+                });
+            }
 
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return NotFound();
+            if (doctor == null)
+            {
+                return NotFound(new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.NOT_FOUND,
+                    Message = "Doctor profile not found",
+                    Details = "No doctor profile associated with this account"
+                });
+            }
 
             // Only update allowed fields - restrict to specific properties only
             if (updateDto.Email != null) doctor.Email = updateDto.Email;
@@ -88,17 +122,48 @@ namespace MedicareApi.Controllers
         {
             var userId = User.FindFirst("uid")?.Value;
             var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+            
+            if (!isDoctor)
+            {
+                return Unauthorized(new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.INSUFFICIENT_PERMISSIONS,
+                    Message = "Access denied",
+                    Details = "Only doctors can upload profile pictures"
+                });
+            }
 
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return NotFound();
+            if (doctor == null)
+            {
+                return NotFound(new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.NOT_FOUND,
+                    Message = "Doctor profile not found",
+                    Details = "No doctor profile associated with this account"
+                });
+            }
 
             if (profilePicture == null || profilePicture.Length == 0)
-                return BadRequest("No file uploaded");
+            {
+                return BadRequest(new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.INVALID_REQUEST,
+                    Message = "No file uploaded",
+                    Details = "Please select a file to upload"
+                });
+            }
 
             var result = await ProfilePictureHelper.SaveProfilePicture(profilePicture, doctor.Id);
             if (!result.success)
-                return BadRequest(result.error);
+            {
+                return BadRequest(new ApiErrorResponse
+                {
+                    ErrorCode = ErrorCodes.BAD_REQUEST,
+                    Message = "Failed to save profile picture",
+                    Details = result.error
+                });
+            }
 
             // Delete old profile picture if exists
             ProfilePictureHelper.DeleteProfilePicture(doctor.ProfilePictureUrl);
