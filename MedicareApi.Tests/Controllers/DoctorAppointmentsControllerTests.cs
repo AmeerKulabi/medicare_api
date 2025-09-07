@@ -423,6 +423,128 @@ namespace MedicareApi.Tests.Controllers
             Assert.IsType<OkObjectResult>(result);
         }
 
+        [Fact]
+        public async Task CreateAppointment_WithoutReason_CreatesSuccessfully()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "patient-user-id", false);
+            
+            var appointment = new Appointment
+            {
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                // Reason is intentionally not set (null)
+            };
+
+            // Act
+            var result = await controller.CreateAppointment(appointment);
+            
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var createdAppointment = Assert.IsType<Appointment>(okResult.Value);
+            Assert.Null(createdAppointment.Reason); // Reason should be null
+            Assert.Equal("patient-user-id", createdAppointment.PatientId);
+            Assert.Equal("test-doctor-id", createdAppointment.DoctorId);
+
+            // Verify appointment was saved to database
+            var dbAppointment = await _context.Appointments.FindAsync(createdAppointment.Id);
+            Assert.NotNull(dbAppointment);
+            Assert.Null(dbAppointment.Reason); // Reason should be null in the database too
+        }
+
+        [Fact]
+        public async Task CreateAppointment_WithEmptyReason_CreatesSuccessfully()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "patient-user-id", false);
+            
+            var appointment = new Appointment
+            {
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Reason = "" // Empty string
+            };
+
+            // Act
+            var result = await controller.CreateAppointment(appointment);
+            
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var createdAppointment = Assert.IsType<Appointment>(okResult.Value);
+            Assert.Equal("", createdAppointment.Reason); // Reason should be empty string
+            Assert.Equal("patient-user-id", createdAppointment.PatientId);
+            Assert.Equal("test-doctor-id", createdAppointment.DoctorId);
+
+            // Verify appointment was saved to database
+            var dbAppointment = await _context.Appointments.FindAsync(createdAppointment.Id);
+            Assert.NotNull(dbAppointment);
+            Assert.Equal("", dbAppointment.Reason); // Reason should be empty string in the database
+        }
+
+        [Fact]
+        public async Task UpdateAppointment_WithoutReason_UpdatesOtherFieldsSuccessfully()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+            var newScheduledTime = DateTime.Now.AddDays(5);
+            var update = new UpdateAppointment
+            {
+                Status = "rescheduled",
+                ScheduledAt = newScheduledTime
+                // Reason is intentionally not set (null)
+            };
+
+            // Act
+            var result = await controller.UpdateAppointment("appointment-1", update);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var updatedAppointment = Assert.IsType<Appointment>(okResult.Value);
+            Assert.Equal("rescheduled", updatedAppointment.Status);
+            Assert.Equal("Checkup", updatedAppointment.Reason); // Should keep original reason
+
+            // Verify data was persisted
+            var dbAppointment = await _context.Appointments.FindAsync("appointment-1");
+            Assert.NotNull(dbAppointment);
+            Assert.Equal("rescheduled", dbAppointment.Status);
+            Assert.Equal("Checkup", dbAppointment.Reason); // Should keep original reason
+        }
+
+        [Fact]
+        public async Task UpdateAppointment_WithEmptyReason_UpdatesReasonToEmpty()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+            var update = new UpdateAppointment
+            {
+                Status = "confirmed",
+                Reason = "" // Empty string should update the reason to empty
+            };
+
+            // Act
+            var result = await controller.UpdateAppointment("appointment-1", update);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var updatedAppointment = Assert.IsType<Appointment>(okResult.Value);
+            Assert.Equal("confirmed", updatedAppointment.Status);
+            Assert.Equal("", updatedAppointment.Reason); // Should be updated to empty string
+
+            // Verify data was persisted
+            var dbAppointment = await _context.Appointments.FindAsync("appointment-1");
+            Assert.NotNull(dbAppointment);
+            Assert.Equal("confirmed", dbAppointment.Status);
+            Assert.Equal("", dbAppointment.Reason); // Should be updated to empty string
+        }
+
         private void SetupControllerContext(ControllerBase controller, string userId, bool isDoctor)
         {
             var claims = new List<Claim>
