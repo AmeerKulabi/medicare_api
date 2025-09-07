@@ -43,9 +43,7 @@ namespace MedicareApi.Tests.Controllers
                 RegistrationCompleted = true,
                 Specialization = "Cardiology",
                 Location = "Baghdad",
-                Phone = "+96470123456789",
                 ClinicName = "Heart Clinic",
-                ClinicAddress = "123 Heart Street",
                 ConsultationFee = "100",
                 ProfilePictureUrl = "test-picture.jpg"
             };
@@ -60,9 +58,7 @@ namespace MedicareApi.Tests.Controllers
                 RegistrationCompleted = true,
                 Specialization = "Dermatology",
                 Location = "Basra",
-                Phone = "+96470987654321",
                 ClinicName = "Skin Clinic",
-                ClinicAddress = "456 Skin Avenue",
                 ConsultationFee = "80"
             };
 
@@ -249,7 +245,6 @@ namespace MedicareApi.Tests.Controllers
                 MedicalLicense = "ML123456",
                 LicenseState = "Baghdad",
                 LicenseExpiry = "2025-12-31",
-                BoardCertification = "Board Certified",
                 YearsOfExperience = "10",
                 MedicalSchool = "University of Baghdad"
             };
