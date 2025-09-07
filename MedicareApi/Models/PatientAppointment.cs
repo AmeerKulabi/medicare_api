@@ -10,7 +10,7 @@
         public string date {  get; set; }
         public string time { get; set; }
         public int duration { get; set; }
-        public string reason { get; set; }
+        public string? reason { get; set; }
         public string status { get; set; }
         public string type { get; set; }
         public string phone { get; set; }
