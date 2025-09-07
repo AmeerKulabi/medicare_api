@@ -43,6 +43,9 @@ namespace MedicareApi.Models
         [Range(0, 50, ErrorMessage = "Years of experience must be between 0 and 50")]
         public string YearsOfExperience { get; set; } = string.Empty;
 
+        [StringLength(2000, ErrorMessage = "Professional biography must not exceed 2000 characters")]
+        public string? ProfessionalBiography { get; set; }
+
         // Education & Training
         [Required(ErrorMessage = "Medical school is required")]
         [StringLength(200, ErrorMessage = "Medical school must not exceed 200 characters")]

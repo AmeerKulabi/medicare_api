@@ -68,7 +68,7 @@ namespace MedicareApi.Controllers
                     type = "consultation",
                     address = doctor.ClinicAddress,
                     phone = doctor.Phone,
-                    consultationFee = int.Parse(doctor.ConsultationFee),
+                    consultationFee = int.TryParse(doctor.ConsultationFee, out var fee) ? fee : 0,
                 });
             }
             

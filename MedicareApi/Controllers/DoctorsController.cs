@@ -170,6 +170,7 @@ namespace MedicareApi.Controllers
             doctor.SubSpecialization = formData.SubSpecialization;
             doctor.BoardCertification = formData.BoardCertification;
             doctor.YearsOfExperience = formData.YearsOfExperience;
+            doctor.ProfessionalBiography = formData.ProfessionalBiography;
             doctor.MedicalSchool = formData.MedicalSchool;
             doctor.GraduationYear = formData.GraduationYear;
             doctor.ResidencyProgram = formData.ResidencyProgram;
@@ -180,6 +181,19 @@ namespace MedicareApi.Controllers
             doctor.ClinicCity = formData.ClinicCity;
             doctor.ClinicState = formData.ClinicState;
             doctor.ClinicZip = formData.ClinicZip;
+            // Set Location as a combination of clinic city and state for search purposes
+            if (!string.IsNullOrEmpty(formData.ClinicCity) && !string.IsNullOrEmpty(formData.ClinicState))
+            {
+                doctor.Location = $"{formData.ClinicCity}, {formData.ClinicState}";
+            }
+            else if (!string.IsNullOrEmpty(formData.ClinicCity))
+            {
+                doctor.Location = formData.ClinicCity;
+            }
+            else if (!string.IsNullOrEmpty(formData.ClinicState))
+            {
+                doctor.Location = formData.ClinicState;
+            }
             doctor.ClinicPhone = formData.ClinicPhone;
             doctor.PracticeType = formData.PracticeType;
             doctor.HospitalAffiliations = formData.HospitalAffiliations;
