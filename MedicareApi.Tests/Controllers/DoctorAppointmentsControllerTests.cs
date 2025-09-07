@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Moq;
 using Xunit;
+using MedicareApi.Tests.Helpers;
 
 namespace MedicareApi.Tests.Controllers
 {
@@ -679,6 +680,143 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public void Appointment_ReasonExceeds500Characters_ValidationFails()
+        {
+            // Arrange
+            var longReason = new string('x', 501); // 501 characters
+            var appointment = new Appointment
+            {
+                PatientId = "patient-1",
+                DoctorId = "doctor-1",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = longReason
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(appointment);
+
+            // Assert
+            Assert.Single(validationResults);
+            Assert.Equal("Appointment reason must not exceed 500 characters", validationResults[0].ErrorMessage);
+            Assert.Contains("Reason", validationResults[0].MemberNames);
+        }
+
+        [Fact]
+        public void Appointment_ReasonEquals500Characters_ValidationPasses()
+        {
+            // Arrange
+            var validReason = new string('x', 500); // exactly 500 characters
+            var appointment = new Appointment
+            {
+                PatientId = "patient-1",
+                DoctorId = "doctor-1",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = validReason
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(appointment);
+
+            // Assert
+            Assert.Empty(validationResults);
+        }
+
+        [Fact]
+        public void Appointment_ReasonUnder500Characters_ValidationPasses()
+        {
+            // Arrange
+            var validReason = new string('x', 499); // 499 characters
+            var appointment = new Appointment
+            {
+                PatientId = "patient-1",
+                DoctorId = "doctor-1",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = validReason
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(appointment);
+
+            // Assert
+            Assert.Empty(validationResults);
+        }
+
+        [Fact]
+        public void Appointment_ReasonIsNull_ValidationPasses()
+        {
+            // Arrange
+            var appointment = new Appointment
+            {
+                PatientId = "patient-1",
+                DoctorId = "doctor-1",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = null
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(appointment);
+
+            // Assert
+            Assert.Empty(validationResults);
+        }
+
+        [Fact]
+        public void UpdateAppointment_ReasonExceeds500Characters_ValidationFails()
+        {
+            // Arrange
+            var longReason = new string('x', 501); // 501 characters
+            var updateAppointment = new UpdateAppointment
+            {
+                Reason = longReason
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(updateAppointment);
+
+            // Assert
+            Assert.Single(validationResults);
+            Assert.Equal("Appointment reason must not exceed 500 characters", validationResults[0].ErrorMessage);
+            Assert.Contains("Reason", validationResults[0].MemberNames);
+        }
+
+        [Fact]
+        public void UpdateAppointment_ReasonEquals500Characters_ValidationPasses()
+        {
+            // Arrange
+            var validReason = new string('x', 500); // exactly 500 characters
+            var updateAppointment = new UpdateAppointment
+            {
+                Reason = validReason
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(updateAppointment);
+
+            // Assert
+            Assert.Empty(validationResults);
+        }
+
+        [Fact]
+        public void UpdateAppointment_ReasonIsNull_ValidationPasses()
+        {
+            // Arrange
+            var updateAppointment = new UpdateAppointment
+            {
+                Reason = null
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(updateAppointment);
+
+            // Assert
+            Assert.Empty(validationResults);
         }
 
         public void Dispose()
