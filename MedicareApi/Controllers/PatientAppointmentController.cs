@@ -58,17 +58,17 @@ namespace MedicareApi.Controllers
                     id = appointment.Id,
                     doctorName = doctor.Name,
                     doctorId = doctor.Id,
-                    doctorSpecialization = doctor.Specialization,
-                    clinicName = doctor.ClinicName,
+                    doctorSpecialization = doctor.Specialization ?? "",
+                    clinicName = "N/A", // Simplified model doesn't have clinic name
                     date = appointment.ScheduledAt.Date.ToShortDateString(),
                     time = appointment.ScheduledAt.TimeOfDay.ToString(),
                     duration = 30,
                     reason = appointment.Reason ?? "",
                     status = appointment.Status,
                     type = "consultation",
-                    address = doctor.ClinicAddress,
-                    phone = doctor.Phone,
-                    consultationFee = int.Parse(doctor.ConsultationFee),
+                    address = doctor.Location ?? "", // Use location instead of clinic address
+                    phone = doctor.Phone ?? "",
+                    consultationFee = 0, // Default consultation fee since it's removed
                 });
             }
             

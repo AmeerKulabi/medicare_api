@@ -106,10 +106,7 @@ namespace MedicareApi.Tests
                 RegistrationCompleted = true,
                 Specialization = "General Medicine",
                 Location = "Baghdad",
-                Phone = "+96470123456789",
-                ClinicName = "Test Clinic",
-                ClinicAddress = "123 Test Street",
-                ConsultationFee = "50"
+                Phone = "+96470123456789"
             };
 
             context.Doctors.Add(doctor);

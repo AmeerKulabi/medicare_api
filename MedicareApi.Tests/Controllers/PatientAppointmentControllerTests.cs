@@ -42,10 +42,8 @@ namespace MedicareApi.Tests.Controllers
                 IsActive = true,
                 RegistrationCompleted = true,
                 Specialization = "Cardiology",
-                ClinicName = "Heart Clinic",
-                ClinicAddress = "123 Heart Street",
-                Phone = "+96470123456789",
-                ConsultationFee = "100"
+                Location = "Baghdad",
+                Phone = "+96470123456789"
             };
 
             var pastAppointment = new Appointment
@@ -197,9 +195,9 @@ namespace MedicareApi.Tests.Controllers
             Assert.Equal("Dr. Test", appointment.doctorName);
             Assert.Equal("test-doctor-id", appointment.doctorId);
             Assert.Equal("Cardiology", appointment.doctorSpecialization);
-            Assert.Equal("Heart Clinic", appointment.clinicName);
-            Assert.Equal("123 Heart Street", appointment.address);
-            Assert.Equal(100, appointment.consultationFee);
+            Assert.Equal("N/A", appointment.clinicName); // Simplified model doesn't have clinic name
+            Assert.Equal("Baghdad", appointment.address); // Using location instead
+            Assert.Equal(0, appointment.consultationFee); // Default consultation fee
         }
 
         [Fact]

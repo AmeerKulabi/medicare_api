@@ -44,9 +44,6 @@ namespace MedicareApi.Tests.Controllers
                 Specialization = "Cardiology",
                 Location = "Baghdad",
                 Phone = "+96470123456789",
-                ClinicName = "Heart Clinic",
-                ClinicAddress = "123 Heart Street",
-                ConsultationFee = "100",
                 ProfilePictureUrl = "test-picture.jpg"
             };
 
@@ -60,10 +57,7 @@ namespace MedicareApi.Tests.Controllers
                 RegistrationCompleted = true,
                 Specialization = "Dermatology",
                 Location = "Basra",
-                Phone = "+96470987654321",
-                ClinicName = "Skin Clinic",
-                ClinicAddress = "456 Skin Avenue",
-                ConsultationFee = "80"
+                Phone = "+96470987654321"
             };
 
             _context.Doctors.AddRange(doctor1, doctor2);
@@ -77,7 +71,7 @@ namespace MedicareApi.Tests.Controllers
             var controller = new DoctorsController(_context);
 
             // Act
-            var result = await controller.GetDoctors(null, null, null, null, null, 1, 20);
+            var result = await controller.GetDoctors(null, null, null, null, 1, 20);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -92,7 +86,7 @@ namespace MedicareApi.Tests.Controllers
             var controller = new DoctorsController(_context);
 
             // Act
-            var result = await controller.GetDoctors("Cardiology", null, null, null, null, 1, 20);
+            var result = await controller.GetDoctors("Cardiology", null, null, null, 1, 20);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -108,7 +102,7 @@ namespace MedicareApi.Tests.Controllers
             var controller = new DoctorsController(_context);
 
             // Act
-            var result = await controller.GetDoctors(null, "Basra", null, null, null, 1, 20);
+            var result = await controller.GetDoctors(null, "Basra", null, null, 1, 20);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -124,7 +118,7 @@ namespace MedicareApi.Tests.Controllers
             var controller = new DoctorsController(_context);
 
             // Act
-            var result = await controller.GetDoctors(null, null, null, "John", null, 1, 20);
+            var result = await controller.GetDoctors(null, null, null, "John", 1, 20);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -140,7 +134,7 @@ namespace MedicareApi.Tests.Controllers
             var controller = new DoctorsController(_context);
 
             // Act
-            var result = await controller.GetDoctors(null, null, null, "Dermatology", null, 1, 20);
+            var result = await controller.GetDoctors(null, null, null, "Dermatology", 1, 20);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -246,12 +240,8 @@ namespace MedicareApi.Tests.Controllers
             var formData = new DoctorRegistrationInfo
             {
                 Specialization = "Updated Cardiology",
-                MedicalLicense = "ML123456",
-                LicenseState = "Baghdad",
-                LicenseExpiry = "2025-12-31",
-                BoardCertification = "Board Certified",
-                YearsOfExperience = "10",
-                MedicalSchool = "University of Baghdad"
+                Phone = "+96477777777777",
+                Location = "Baghdad"
             };
 
             // Act
@@ -261,8 +251,8 @@ namespace MedicareApi.Tests.Controllers
             var okResult = Assert.IsType<OkObjectResult>(result);
             var updatedDoctor = Assert.IsType<Doctor>(okResult.Value);
             Assert.Equal("Updated Cardiology", updatedDoctor.Specialization);
-            Assert.Equal("ML123456", updatedDoctor.MedicalLicense);
-            Assert.Equal("Baghdad", updatedDoctor.LicenseState);
+            Assert.Equal("+96477777777777", updatedDoctor.Phone);
+            Assert.Equal("Baghdad", updatedDoctor.Location);
             
             // Verify data was persisted
             var doctorFromDb = await _context.Doctors.FindAsync("doctor-1");
@@ -278,7 +268,7 @@ namespace MedicareApi.Tests.Controllers
             var controller = new DoctorsController(_context);
 
             // Act  
-            var result = await controller.GetDoctors(null, null, null, null, null, 1, 20);
+            var result = await controller.GetDoctors(null, null, null, null, 1, 20);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -297,7 +287,7 @@ namespace MedicareApi.Tests.Controllers
             var controller = new DoctorsController(emptyContext);
 
             // Act
-            var result = await controller.GetDoctors(null, null, null, null, null, 1, 20);
+            var result = await controller.GetDoctors(null, null, null, null, 1, 20);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -312,7 +302,7 @@ namespace MedicareApi.Tests.Controllers
             var controller = new DoctorsController(_context);
 
             // Act
-            var result = await controller.GetDoctors("Cardiology", "Baghdad", null, null, null, 1, 20);
+            var result = await controller.GetDoctors("Cardiology", "Baghdad", null, null, 1, 20);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -328,7 +318,7 @@ namespace MedicareApi.Tests.Controllers
             var controller = new DoctorsController(_context);
 
             // Act
-            var result = await controller.GetDoctors("NonExistentSpecialization", null, null, null, null, 1, 20);
+            var result = await controller.GetDoctors("NonExistentSpecialization", null, null, null, 1, 20);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -377,7 +367,7 @@ namespace MedicareApi.Tests.Controllers
             var controller = new DoctorsController(_context);
 
             // Act - Get first page with page size 1
-            var result = await controller.GetDoctors(null, null, null, null, null, 1, 1);
+            var result = await controller.GetDoctors(null, null, null, null, 1, 1);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
@@ -392,70 +382,21 @@ namespace MedicareApi.Tests.Controllers
         }
 
         [Fact]
-        public async Task GetDoctors_WithLanguageFilter_ReturnsFilteredDoctors()
+        public async Task GetDoctors_WithSortBy_SortsByName()
         {
-            // Arrange - Add languages to our test doctors
-            var doctor1 = await _context.Doctors.FindAsync("doctor-1");
-            var doctor2 = await _context.Doctors.FindAsync("doctor-2");
-            doctor1!.Languages = new List<string> { "English", "Arabic" };
-            doctor2!.Languages = new List<string> { "English", "Kurdish" };
-            await _context.SaveChangesAsync();
-
+            // Arrange
             var controller = new DoctorsController(_context);
 
-            // Act - Filter by Arabic
-            var result = await controller.GetDoctors(null, null, null, null, new List<string> { "Arabic" }, 1, 20);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value);
-            Assert.Single(response.Doctors);
-            Assert.Equal("Dr. John Smith", response.Doctors.First().Name);
-        }
-
-        [Fact]
-        public async Task GetDoctors_WithMultipleLanguageFilter_ReturnsOnlyDoctorsWithAllLanguages()
-        {
-            // Arrange - Add languages to our test doctors
-            var doctor1 = await _context.Doctors.FindAsync("doctor-1");
-            var doctor2 = await _context.Doctors.FindAsync("doctor-2");
-            doctor1!.Languages = new List<string> { "English", "Arabic", "French" };
-            doctor2!.Languages = new List<string> { "English", "Kurdish" };
-            await _context.SaveChangesAsync();
-
-            var controller = new DoctorsController(_context);
-
-            // Act - Filter by English AND Arabic (doctor must speak both)
-            var result = await controller.GetDoctors(null, null, null, null, new List<string> { "English", "Arabic" }, 1, 20);
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value);
-            Assert.Single(response.Doctors);
-            Assert.Equal("Dr. John Smith", response.Doctors.First().Name);
-        }
-
-        [Fact]
-        public async Task GetDoctors_WithExperienceSort_SortsByExperience()
-        {
-            // Arrange - Add experience to our test doctors
-            var doctor1 = await _context.Doctors.FindAsync("doctor-1");
-            var doctor2 = await _context.Doctors.FindAsync("doctor-2");
-            doctor1!.YearsOfExperience = "5 years";
-            doctor2!.YearsOfExperience = "10 years";
-            await _context.SaveChangesAsync();
-
-            var controller = new DoctorsController(_context);
-
-            // Act - Sort by experience ascending
-            var result = await controller.GetDoctors(null, null, "experience_asc", null, null, 1, 20);
+            // Act - Sort by name (default sorting)
+            var result = await controller.GetDoctors(null, null, "name", null, 1, 20);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value);
             Assert.Equal(2, response.Doctors.Count);
-            Assert.Equal("Dr. John Smith", response.Doctors.First().Name); // 5 years first
-            Assert.Equal("Dr. Jane Doe", response.Doctors.Last().Name); // 10 years second
+            // Should be sorted by name alphabetically
+            Assert.Equal("Dr. Jane Doe", response.Doctors.First().Name); 
+            Assert.Equal("Dr. John Smith", response.Doctors.Last().Name);
         }
 
         [Fact]
@@ -465,42 +406,12 @@ namespace MedicareApi.Tests.Controllers
             var controller = new DoctorsController(_context);
 
             // Act - Request page size larger than maximum (20)
-            var result = await controller.GetDoctors(null, null, null, null, null, 1, 50);
+            var result = await controller.GetDoctors(null, null, null, null, 1, 50);
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<PaginatedResponse<Doctor>>(okResult.Value);
             Assert.Equal(20, response.PageSize); // Should be limited to max 20
-        }
-
-        [Fact]
-        public async Task GetLanguages_ReturnsAllUniqueLanguages()
-        {
-            // Arrange - Add languages to our test doctors
-            var doctor1 = await _context.Doctors.FindAsync("doctor-1");
-            var doctor2 = await _context.Doctors.FindAsync("doctor-2");
-            doctor1!.Languages = new List<string> { "English", "Arabic" };
-            doctor2!.Languages = new List<string> { "English", "Kurdish", "French" };
-            await _context.SaveChangesAsync();
-
-            var controller = new DoctorsController(_context);
-
-            // Act
-            var result = await controller.GetLanguages();
-
-            // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result);
-            var languages = Assert.IsType<List<string>>(okResult.Value);
-            Assert.Equal(4, languages.Count);
-            Assert.Contains("English", languages);
-            Assert.Contains("Arabic", languages);
-            Assert.Contains("Kurdish", languages);
-            Assert.Contains("French", languages);
-            // Should be sorted alphabetically
-            Assert.Equal("Arabic", languages[0]);
-            Assert.Equal("English", languages[1]);
-            Assert.Equal("French", languages[2]);
-            Assert.Equal("Kurdish", languages[3]);
         }
 
         public void Dispose()

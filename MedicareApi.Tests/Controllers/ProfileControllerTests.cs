@@ -45,9 +45,6 @@ namespace MedicareApi.Tests.Controllers
                 Specialization = "Cardiology",
                 Location = "Baghdad",
                 Phone = "+96470123456789",
-                ClinicName = "Heart Clinic",
-                ClinicAddress = "123 Heart Street",
-                ConsultationFee = "100",
                 ProfilePictureUrl = "test-picture.jpg"
             };
 
@@ -180,12 +177,8 @@ namespace MedicareApi.Tests.Controllers
             {
                 Email = "updated@test.com",
                 Phone = "+96470999999999",
-                HospitalAffiliations = "Updated Hospital",
-                ClinicName = "Updated Clinic",
-                ClinicAddress = "Updated Address",
-                ClinicPhone = "+96470888888888",
-                ConsultationFee = "150",
-                ProfessionalBiography = "Updated biography"
+                Specialization = "Updated Cardiology",
+                Location = "Updated Baghdad"
             };
 
             // Act
@@ -194,15 +187,15 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var updatedDoctor = Assert.IsType<Doctor>(okResult.Value);
-            Assert.Equal("Updated Hospital", updatedDoctor.HospitalAffiliations);
-            Assert.Equal("Updated Clinic", updatedDoctor.ClinicName);
-            Assert.Equal("Updated Address", updatedDoctor.ClinicAddress);
-            Assert.Equal("150", updatedDoctor.ConsultationFee);
+            Assert.Equal("Updated Cardiology", updatedDoctor.Specialization);
+            Assert.Equal("Updated Baghdad", updatedDoctor.Location);
+            Assert.Equal("updated@test.com", updatedDoctor.Email);
+            Assert.Equal("+96470999999999", updatedDoctor.Phone);
 
             // Verify data was persisted
             var doctorFromDb = await _context.Doctors.FindAsync("test-doctor-id");
             Assert.NotNull(doctorFromDb);
-            Assert.Equal("Updated Hospital", doctorFromDb.HospitalAffiliations);
+            Assert.Equal("Updated Cardiology", doctorFromDb.Specialization);
             Assert.True(doctorFromDb.RegistrationCompleted); // Should be set to true after update
         }
 
@@ -216,7 +209,7 @@ namespace MedicareApi.Tests.Controllers
             // Get original values
             var originalDoctor = await _context.Doctors.FindAsync("test-doctor-id");
             Assert.NotNull(originalDoctor);
-            var originalClinicName = originalDoctor.ClinicName;
+            var originalSpecialization = originalDoctor.Specialization;
 
             var updateDto = new ProfileUpdateDto
             {
@@ -230,7 +223,8 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var updatedDoctor = Assert.IsType<Doctor>(okResult.Value);
-            Assert.Equal(originalClinicName, updatedDoctor.ClinicName); // Should remain unchanged
+            Assert.Equal(originalSpecialization, updatedDoctor.Specialization); // Should remain unchanged
+            Assert.Equal("updated-only@test.com", updatedDoctor.Email); // Should be updated
         }
 
         [Fact]
@@ -254,7 +248,7 @@ namespace MedicareApi.Tests.Controllers
             SetupControllerContext(controller, "incomplete-doctor-user-id", true);
             var updateDto = new ProfileUpdateDto
             {
-                ClinicName = "New Clinic"
+                Specialization = "New Specialization"
             };
 
             // Act
@@ -395,7 +389,7 @@ namespace MedicareApi.Tests.Controllers
             SetupControllerContext(controller, "inactive-doctor-user-id", true);
             var updateDto = new ProfileUpdateDto
             {
-                ClinicName = "Cardiology Clinic"
+                Specialization = "Cardiology"
             };
 
             // Act

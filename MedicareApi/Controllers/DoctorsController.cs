@@ -25,7 +25,6 @@ namespace MedicareApi.Controllers
             [FromQuery] string? location, 
             [FromQuery] string? sortBy, 
             [FromQuery] string? search,
-            [FromQuery] List<string>? languages,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
@@ -42,45 +41,16 @@ namespace MedicareApi.Controllers
                 query = query.Where(d => d.Location == location);
             if (!string.IsNullOrEmpty(search))
                 query = query.Where(d => d.Name.Contains(search) || d.Specialization.Contains(search));
-            if (languages != null && languages.Count > 0)
-                query = query.Where(d => d.Languages.Any(l => languages.Contains(l)));
 
-            // Get total count before sorting to avoid EF translation issues with ParseExperience
+            // Get total count and data
             var totalCount = await query.CountAsync();
-
-            // Fetch filtered data without sorting to avoid EF translation issues with ParseExperience
-            var allFilteredDoctors = await query.ToListAsync();
-
-            // Apply sorting in memory - only by experience (remove rating/distance sorting)
-            IEnumerable<Doctor> sortedDoctors;
-            if (!string.IsNullOrEmpty(sortBy))
-            {
-                switch (sortBy.ToLower())
-                {
-                    case "experience":
-                    case "experience_desc":
-                        sortedDoctors = allFilteredDoctors.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
-                        break;
-                    case "experience_asc":
-                        sortedDoctors = allFilteredDoctors.OrderBy(d => ParseExperience(d.YearsOfExperience));
-                        break;
-                    default:
-                        // Default sort by experience descending
-                        sortedDoctors = allFilteredDoctors.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
-                        break;
-                }
-            }
-            else
-            {
-                // Default sort by experience descending
-                sortedDoctors = allFilteredDoctors.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
-            }
-
-            // Apply pagination to sorted data
-            var doctors = sortedDoctors
+            
+            // Apply pagination - simplified sorting since YearsOfExperience is removed
+            var doctors = await query
+                .OrderBy(d => d.Name) // Simple name-based ordering
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
             // Ensure all doctors have profile picture URLs (default if none set)
             foreach (var doctor in doctors)
@@ -102,32 +72,6 @@ namespace MedicareApi.Controllers
             };
 
             return Ok(response);
-        }
-
-        private static int ParseExperience(string? experienceString)
-        {
-            if (string.IsNullOrEmpty(experienceString))
-                return 0;
-
-            // Try to extract numeric value from experience string
-            var digits = string.Concat(experienceString.Where(char.IsDigit));
-            return int.TryParse(digits, out var experience) ? experience : 0;
-        }
-
-        [HttpGet("languages")]
-        public async Task<IActionResult> GetLanguages()
-        {
-            var doctors = await _db.Doctors
-                .Where(d => d.Languages != null && d.Languages.Any())
-                .ToListAsync();
-
-            var allLanguages = doctors
-                .SelectMany(d => d.Languages!)
-                .Distinct()
-                .OrderBy(l => l)
-                .ToList();
-
-            return Ok(allLanguages);
         }
 
         [HttpGet("{id}")]
