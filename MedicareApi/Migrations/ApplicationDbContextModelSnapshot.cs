@@ -156,25 +156,7 @@ namespace MedicareApi.Migrations
                     b.Property<string>("Availability")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("BoardCertification")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ClinicAddress")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ClinicCity")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("ClinicName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ClinicPhone")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ClinicState")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ClinicZip")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ConsultationFee")
@@ -187,16 +169,10 @@ namespace MedicareApi.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("FellowshipProgram")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Gender")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GraduationYear")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("HospitalAffiliations")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
@@ -224,9 +200,6 @@ namespace MedicareApi.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Phone")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("PracticeType")
                         .HasColumnType("TEXT");
 
@@ -241,12 +214,6 @@ namespace MedicareApi.Migrations
 
                     b.Property<bool>("RegistrationCompleted")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("ResidencyHospital")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ResidencyProgram")
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("ServicesOffered")
                         .HasColumnType("TEXT");
