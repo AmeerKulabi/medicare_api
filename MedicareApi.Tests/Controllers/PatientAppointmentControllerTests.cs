@@ -44,8 +44,6 @@ namespace MedicareApi.Tests.Controllers
                 RegistrationCompleted = true,
                 Specialization = "Cardiology",
                 ClinicName = "Heart Clinic",
-                ClinicAddress = "123 Heart Street",
-                Phone = "+96470123456789",
                 ConsultationFee = "100"
             };
 
@@ -199,7 +197,7 @@ namespace MedicareApi.Tests.Controllers
             Assert.Equal("test-doctor-id", appointment.doctorId);
             Assert.Equal("Cardiology", appointment.doctorSpecialization);
             Assert.Equal("Heart Clinic", appointment.clinicName);
-            Assert.Equal("123 Heart Street", appointment.address);
+            Assert.Null(appointment.address); // ClinicAddress field was removed as deprecated
             Assert.Equal(100, appointment.consultationFee);
         }
 

@@ -66,8 +66,8 @@ namespace MedicareApi.Controllers
                     reason = appointment.Reason ?? "",
                     status = appointment.Status,
                     type = "consultation",
-                    address = doctor.ClinicAddress,
-                    phone = doctor.Phone,
+                    address = null, // Removed deprecated ClinicAddress field
+                    phone = null, // Removed deprecated Phone field
                     consultationFee = int.Parse(doctor.ConsultationFee),
                 });
             }

@@ -118,7 +118,7 @@ namespace MedicareApi.Controllers
             );
 
             // Additional doctor profile creation logic can go here
-            return Ok(new RegisterResponse { UserId = user.Id, IsActive = false, RegistrationCompleted = false,
+            return Ok(new RegisterResponse { UserId = user.Id, IsActive = user.IsDoctor ? false : true, RegistrationCompleted = user.IsDoctor ? false : true,
                 Token = new JwtSecurityTokenHandler().WriteToken(token), IsDoctor = user.IsDoctor });
         }
 
@@ -180,8 +180,8 @@ namespace MedicareApi.Controllers
                     Token = new JwtSecurityTokenHandler().WriteToken(token),
                     UserId = user.Id,
                     IsDoctor = user.IsDoctor,
-                    IsActive = isActive,
-                    RegistrationCompleted = registrationCompleted
+                    IsActive = user.IsDoctor ? isActive : true,
+                    RegistrationCompleted = user.IsDoctor ? registrationCompleted : true
 
                 });
             }
