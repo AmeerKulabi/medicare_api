@@ -9,7 +9,7 @@ namespace MedicareApi.Utils
 
         public static string GetProfilePictureUrl(string? currentUrl)
         {
-            return string.IsNullOrEmpty(currentUrl) ? DefaultProfilePictureUrl : currentUrl;
+            return string.IsNullOrEmpty(currentUrl) ? null : currentUrl;
         }
 
         public static async Task<(bool success, string? url, string? error)> SaveProfilePicture(IFormFile file, string doctorId)

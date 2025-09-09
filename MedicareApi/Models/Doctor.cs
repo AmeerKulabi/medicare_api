@@ -33,6 +33,7 @@
 
         // Practice Information
         public string? ClinicName { get; set; }
+        public string? ClinicAddress { get; set; }
         public string? PracticeType { get; set; }
 
         // Services & Availability

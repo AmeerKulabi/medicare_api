@@ -4,42 +4,64 @@ namespace MedicareApi.ViewModels
 {
     public class ProfileUpdateDto
     {
-        // البريد الإلكتروني (email)
-        [EmailAddress(ErrorMessage = "Invalid email format")]
-        [StringLength(256, ErrorMessage = "Email must not exceed 256 characters")]
-        public string? Email { get; set; }
-        
-        // السيرة المهنية (professional biography)
-        [StringLength(2000, ErrorMessage = "Professional biography must not exceed 2000 characters")]
-        public string? ProfessionalBiography { get; set; }
-        
-        // اللغات المتحدث بها (spoken languages)
-        public List<string>? Languages { get; set; }
-        
-        // التعليم والتدريب (education & training)
-        [StringLength(200, ErrorMessage = "Medical school name must not exceed 200 characters")]
-        public string? MedicalSchool { get; set; }
-        
-        [RegularExpression(@"^\d{4}$", ErrorMessage = "Graduation year must be a 4-digit year")]
-        public string? GraduationYear { get; set; }
-        
-        // اسم العيادة/المركز (clinic/center name)
-        [StringLength(200, ErrorMessage = "Clinic name must not exceed 200 characters")]
-        public string? ClinicName { get; set; }
-        
-        // رسوم الاستشارة (consultation fee in IQD)
-        [RegularExpression(@"^\d+(\.\d{1,2})?$", ErrorMessage = "Consultation fee must be a valid amount")]
-        [StringLength(20, ErrorMessage = "Consultation fee must not exceed 20 characters")]
-        public string? ConsultationFee { get; set; }
+        // تاريخ الميلاد
+        public DateTime? DateOfBirth { get; set; }
 
-        [RegularExpression(@"^\d{1,2}$", ErrorMessage = "Years of experience must be between 0-99 years")]
+        // الجنس
+        [StringLength(10)]
+        public string? Gender { get; set; }
+
+        // الترخيص الطبي
+        [StringLength(100)]
+        public string? MedicalLicense { get; set; }
+
+        [StringLength(100)]
+        public string? LicenseState { get; set; }
+
+        public DateTime? LicenseExpiry { get; set; }
+
+        // التخصص
+        public string? Specialization { get; set; }
+        public string? SubSpecialization { get; set; }
+
+        // الخبرة
+        [StringLength(20)]
         public string? YearsOfExperience { get; set; }
 
-        public string? Specialization {  get; set; }
+        // التعليم
+        [StringLength(200)]
+        public string? MedicalSchool { get; set; }
 
-        public string? Location { get; set; }
-        
-        // صورة الملف الشخصي (profile picture) - Note: IFormFile is used for multipart uploads
-        // This will be handled separately in the controller for multipart/form-data requests
+        [StringLength(10)]
+        public string? GraduationYear { get; set; }
+
+        public string? Bio { get; set; }   // maps to ProfessionalBiography
+        public string? Education { get; set; }
+
+        // المستشفى / العيادة
+        [StringLength(200)]
+        public string? ClinicName { get; set; }
+
+        [StringLength(100)]
+        public string? PracticeType { get; set; }
+
+        public List<string>? ServicesOffered { get; set; }
+
+        // الرسوم
+        [StringLength(20)]
+        public string? ConsultationFee { get; set; }
+
+        // المواعيد
+        public string? Availability { get; set; }
+
+        // اللغات
+        public List<string>? Languages { get; set; }
+
+        // الشروط والخصوصية
+        public bool? TermsAccepted { get; set; }
+        public bool? PrivavyAccepted { get; set; }
+
+        // صورة الملف الشخصي
+        public string? ProfilePictureUrl { get; set; }
     }
 }
