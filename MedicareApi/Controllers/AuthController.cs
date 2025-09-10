@@ -316,11 +316,45 @@ namespace MedicareApi.Controllers
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = HttpUtility.UrlEncode(token);
-            var resetLink = $"{Request.Scheme}://{Request.Host}/reset-password?email={HttpUtility.UrlEncode(user.Email)}&token={encodedToken}";
+            var resetLink = $"{Request.Scheme}://{Request.Host}/api/auth/reset-password-link?email={HttpUtility.UrlEncode(user.Email)}&token={encodedToken}";
 
             await _emailService.SendPasswordResetAsync(request.Email, resetLink);
 
             return Ok(new { message = "If a matching account was found, a password reset email has been sent." });
+        }
+
+        /// <summary>
+        /// Handles password reset link from email (GET request).
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [HttpGet("reset-password-link")]
+        public async Task<IActionResult> ResetPasswordLink(string email, string token)
+        {
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
+            {
+                return BadRequest(new { message = "Invalid password reset link" });
+            }
+
+            // For a web API, we typically don't serve HTML pages directly.
+            // This endpoint serves as a validation step and returns instructions.
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return BadRequest(new { message = "Invalid password reset request" });
+            }
+
+            // We don't actually reset the password here - just validate the token
+            // and provide instructions for the client
+            var decodedToken = HttpUtility.UrlDecode(token);
+            
+            return Ok(new { 
+                message = "Password reset link is valid. Use the POST /api/auth/reset-password endpoint with your new password.",
+                email = email,
+                token = decodedToken,
+                instructions = "Send a POST request to /api/auth/reset-password with email, token, and newPassword fields."
+            });
         }
 
         /// <summary>

@@ -145,6 +145,47 @@ namespace MedicareApi.Tests.Controllers
             Assert.NotNull(okResult.Value);
         }
 
+        [Fact]
+        public async Task ResetPasswordLink_ValidParams_ReturnsOk()
+        {
+            // Arrange
+            var user = new ApplicationUser
+            {
+                Id = "test-user-id",
+                Email = "test@test.com"
+            };
+
+            var userManager = CreateMockUserManager();
+            userManager.Setup(um => um.FindByEmailAsync(It.IsAny<string>()))
+                .ReturnsAsync(user);
+
+            var emailService = new Mock<IEmailService>();
+            var controller = CreateController(userManager.Object, emailService.Object);
+
+            // Act
+            var result = await controller.ResetPasswordLink("test@test.com", "valid-token");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(okResult.Value);
+        }
+
+        [Fact]
+        public async Task ResetPasswordLink_MissingParams_ReturnsBadRequest()
+        {
+            // Arrange
+            var userManager = CreateMockUserManager();
+            var emailService = new Mock<IEmailService>();
+            var controller = CreateController(userManager.Object, emailService.Object);
+
+            // Act
+            var result = await controller.ResetPasswordLink("", "");
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.NotNull(badRequestResult.Value);
+        }
+
         private Mock<UserManager<ApplicationUser>> CreateMockUserManager()
         {
             var userStore = new Mock<IUserStore<ApplicationUser>>();
