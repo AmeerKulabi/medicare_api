@@ -63,5 +63,9 @@ namespace MedicareApi.ViewModels
 
         // صورة الملف الشخصي
         public string? ProfilePictureUrl { get; set; }
+        
+        // Phone number for patients
+        [RegularExpression(@"^\+964\d{10}$", ErrorMessage = "Phone number must start with +964 and be followed by exactly 10 digits")]
+        public string? Phone { get; set; }
     }
 }
