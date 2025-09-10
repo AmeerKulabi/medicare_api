@@ -316,7 +316,7 @@ namespace MedicareApi.Controllers
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = HttpUtility.UrlEncode(token);
-            var resetLink = $"{Request.Scheme}://{Request.Host}/reset-password?email={HttpUtility.UrlEncode(user.Email)}&token={encodedToken}";
+            var resetLink = $"http://localhost:8081/reset-password?email={HttpUtility.UrlEncode(user.Email)}&token={encodedToken}";
 
             await _emailService.SendPasswordResetAsync(request.Email, resetLink);
 
