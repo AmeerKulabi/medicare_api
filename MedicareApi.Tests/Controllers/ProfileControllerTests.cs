@@ -122,7 +122,7 @@ namespace MedicareApi.Tests.Controllers
             SetupControllerContextWithoutAuth(controller);
             var updateDto = new ProfileUpdateDto
             {
-                Email = "updated@test.com"
+                ClinicName = "Updated Clinic"
             };
 
             // Act
@@ -140,7 +140,7 @@ namespace MedicareApi.Tests.Controllers
             SetupControllerContext(controller, "patient-user-id", false);
             var updateDto = new ProfileUpdateDto
             {
-                Email = "updated@test.com"
+                ClinicName = "Updated Clinic"
             };
 
             // Act
@@ -158,7 +158,7 @@ namespace MedicareApi.Tests.Controllers
             SetupControllerContext(controller, "non-existent-doctor", true);
             var updateDto = new ProfileUpdateDto
             {
-                Email = "updated@test.com"
+                ClinicName = "Updated Clinic"
             };
 
             // Act
@@ -176,10 +176,9 @@ namespace MedicareApi.Tests.Controllers
             SetupControllerContext(controller, "doctor-user-id", true);
             var updateDto = new ProfileUpdateDto
             {
-                Email = "updated@test.com",
                 ClinicName = "Updated Clinic",
                 ConsultationFee = "150",
-                ProfessionalBiography = "Updated biography"
+                Bio = "Updated biography"
             };
 
             // Act
@@ -211,7 +210,7 @@ namespace MedicareApi.Tests.Controllers
 
             var updateDto = new ProfileUpdateDto
             {
-                Email = "updated-only@test.com"
+                ClinicName = "updated-only-clinic"
                 // Other fields are null - should not be updated
             };
 
