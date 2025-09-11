@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" style="background: #f8fafb;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <!-- Tajawal font for Arabic, fallback to system fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap">
+    <style>
+        body {
+            font-family: 'Tajawal', 'Noto Sans Arabic', 'Cairo', Arial, Helvetica, sans-serif;
+            background-color: #f8fafb;
+            margin: 0;
+            padding: 0;
+            direction: rtl;
+        }
+        .email-container {
+            background-color: #f8fafb;
+            padding: 40px 20px;
+        }
+        .email-card {
+            max-width: 520px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2EC492 0%, #26b47f 100%);
+            padding: 32px 24px;
+            text-align: center;
+        }
+        .logo-container {
+            display: inline-block;
+            background: #fff;
+            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            line-height: 64px;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(46, 196, 146, 0.3);
+        }
+        .brand-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            margin: 0;
+        }
+        .content {
+            padding: 40px 32px;
+        }
+        .content h1 {
+            margin: 0 0 16px 0;
+            color: #1a1a1a;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: right;
+        }
+        .content p {
+            margin: 0 0 16px 0;
+            color: #555;
+            font-size: 16px;
+            line-height: 1.6;
+            text-align: right;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #2EC492 0%, #26b47f 100%);
+            color: #fff;
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 24px 0;
+            box-shadow: 0 4px 12px rgba(46, 196, 146, 0.3);
+            transition: all 0.3s ease;
+        }
+        .cta-button:hover {
+            box-shadow: 0 6px 16px rgba(46, 196, 146, 0.4);
+            transform: translateY(-2px);
+        }
+        .info-box {
+            background: #f0fcf7;
+            border: 1px solid #2EC492;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #1a5c45;
+        }
+        .info-box strong {
+            color: #2EC492;
+        }
+        .footer-info {
+            background: #f8fafb;
+            padding: 24px 32px;
+            border-top: 1px solid #e0e4e9;
+            color: #888;
+            font-size: 14px;
+            text-align: right;
+        }
+        .footer-copyright {
+            margin-top: 24px;
+            color: #b3b3b3;
+            font-size: 12px;
+            text-align: center;
+        }
+        @media only screen and (max-width: 600px) {
+            .email-card {
+                margin: 0 10px;
+                border-radius: 12px;
+            }
+            .content {
+                padding: 24px 20px;
+            }
+            .header {
+                padding: 24px 20px;
+            }
+            .footer-info {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-card">
+            <!-- Header with Logo -->
+            <div class="header">
+                <div class="logo-container">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="#2EC492"/>
+                    </svg>
+                </div>
+                <h1 class="brand-name">صحتك</h1>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="content">
+                {{content}}
+            </div>
+            
+            <!-- Footer -->
+            <div class="footer-info">
+                <p style="margin: 0 0 8px 0;">
+                    مع أطيب التحيات،<br>
+                    فريق منصة صحتك
+                </p>
+                <p style="margin: 0; color: #aaa; font-size: 13px;">
+                    للدعم الفني: support@sehtak.com | هاتف: 123-456-7890
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer-copyright">
+            جميع الحقوق محفوظة © صحتك {{year}}
+        </div>
+    </div>
+</body>
+</html>
