@@ -180,7 +180,7 @@ namespace MedicareApi.Controllers
                 else
                 {
                     registrationCompleted = true;
-                    isActive = false;
+                    isActive = true;
                 }
                 return Ok(new LoginResponse
                 {

@@ -1,5 +1,6 @@
 ﻿using MedicareApi.Data;
 using MedicareApi.Models;
+using MedicareApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,17 @@ namespace MedicareApi.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        /// <summary>
+        /// Email service.
+        /// </summary>
+        private readonly IEmailService _emailService;
 
-        public DoctorAppointmentsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public DoctorAppointmentsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager,
+            IEmailService emailService)
         {
             _db = db;
             _userManager = userManager;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -74,14 +81,19 @@ namespace MedicareApi.Controllers
                 return Unauthorized();
 
             // If user is a doctor, verify they can create appointments
+            Doctor doctor;
             if (isDoctor)
             {
-                var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+                doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
                 if (doctor == null) return Unauthorized();
                 
                 // Doctor can create appointments for any patient, but must be for their own doctor record
                 if (appointment.DoctorId != doctor.Id)
                     return Unauthorized();
+            }
+            else
+            {
+                doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.Id == appointment.DoctorId);
             }
 
             Appointment newAppointment = new Appointment()
@@ -94,6 +106,8 @@ namespace MedicareApi.Controllers
             };
             _db.Appointments.Add(newAppointment);
             await _db.SaveChangesAsync();
+            if (_emailService != null)
+                _emailService.SendAppointmentBooked(User.Identity.Name, newAppointment.ScheduledAt, doctor.Name, doctor.ClinicAddress, doctor.Phone);
             return Ok(newAppointment);
         }
 
@@ -104,9 +118,10 @@ namespace MedicareApi.Controllers
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
             
             var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+
 
             var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
+            Appointment oldApt = appt;
             if (appt == null) return NotFound();
 
             if(updates.ScheduledAt != null)
@@ -117,8 +132,27 @@ namespace MedicareApi.Controllers
 
             if(updates.Reason != null)
                 appt.Reason = updates.Reason;
+
+            // If user is a doctor, verify they can create appointments
+            Doctor doctor;
+            if (isDoctor)
+            {
+                doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+                if (doctor == null) return Unauthorized();
+
+                // Doctor can create appointments for any patient, but must be for their own doctor record
+                if (appt.DoctorId != doctor.Id)
+                    return Unauthorized();
+            }
+            else
+            {
+                doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.Id == appt.DoctorId);
+            }
+
             // Update more fields as needed
             await _db.SaveChangesAsync();
+            if (_emailService != null)
+                _emailService.SendAppointmentChanged(User.Identity.Name, oldApt.ScheduledAt, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, doctor.Phone);
             return Ok(appt);
         }
 
@@ -136,6 +170,25 @@ namespace MedicareApi.Controllers
 
             _db.Appointments.Remove(appt);
             await _db.SaveChangesAsync();
+
+            // If user is a doctor, verify they can create appointments
+            Doctor doctor;
+            if (isDoctor)
+            {
+                doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+                if (doctor == null) return Unauthorized();
+
+                // Doctor can create appointments for any patient, but must be for their own doctor record
+                if (appt.DoctorId != doctor.Id)
+                    return Unauthorized();
+            }
+            else
+            {
+                doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.Id == appt.DoctorId);
+            }
+
+            if (_emailService != null)
+                _emailService.SendAppointmentDeleted(User.Identity.Name, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, doctor.Phone);
             return NoContent();
         }
 

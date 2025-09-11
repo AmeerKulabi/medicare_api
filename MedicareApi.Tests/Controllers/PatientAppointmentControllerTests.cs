@@ -13,6 +13,7 @@ namespace MedicareApi.Tests.Controllers
     {
         private readonly TestFixture _fixture;
         private readonly ApplicationDbContext _context;
+        private readonly IServiceProvider _serviceProvider;
 
         public PatientAppointmentControllerTests(TestFixture fixture)
         {
@@ -87,7 +88,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContextWithoutAuth(controller);
 
             // Act
@@ -101,7 +102,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_DoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -115,7 +116,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_UpcomingType_ReturnsFutureAppointments()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -132,7 +133,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_PastType_ReturnsPastAppointments()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -149,7 +150,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_DefaultType_ReturnsFutureAppointments()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -165,7 +166,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_OnlyReturnsOwnAppointments()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -183,7 +184,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_PopulatesCorrectDoctorInformation()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -206,7 +207,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeletePatientAppointment_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContextWithoutAuth(controller);
 
             // Act
@@ -220,7 +221,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeletePatientAppointment_DoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -234,7 +235,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeletePatientAppointment_AppointmentNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -248,7 +249,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeletePatientAppointment_OtherPatientsAppointment_ReturnsNotFound()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act - Try to delete another patient's appointment
@@ -262,7 +263,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeletePatientAppointment_ValidAppointment_DeletesSuccessfully()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Verify appointment exists before deletion
@@ -284,7 +285,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_NoAppointments_ReturnsEmptyList()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-without-appointments", false);
 
             // Act
@@ -300,7 +301,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_FormatsDateAndTimeCorrectly()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act

@@ -2,8 +2,10 @@ using MedicareApi.Data;
 using MedicareApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Globalization;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -15,7 +17,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:8080", "https://localhost:8080")
+            policy.WithOrigins("http://localhost:8081", "https://localhost:8081")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -109,6 +111,21 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+var supportedCultures = new[]
+{
+    new CultureInfo("ar-IQ"),
+    new CultureInfo("en-US"),
+    new CultureInfo("fr-FR")
+};
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("en-US"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+    // You can also configure providers like QueryStringRequestCultureProvider
+});
 
 // Security headers
 app.Use(async (context, next) =>
