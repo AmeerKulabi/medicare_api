@@ -1,0 +1,380 @@
+﻿using MedicareApi.Models;
+using System.Net;
+using System.Net.Mail;
+using System.Threading.Tasks;
+
+namespace MedicareApi.Services
+{
+    public class SmtpEmailService : IEmailService
+    {
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<SmtpEmailService> _logger;
+
+        public SmtpEmailService(IConfiguration configuration, ILogger<SmtpEmailService> logger)
+        {
+            _configuration = configuration;
+            _logger = logger;
+        }
+
+        public async Task SendAppointmentBooked(string email, DateTime aptTime, string doctorName, string doctorAddress, string DoctorPhoneNumber)
+        {
+            var culture = System.Globalization.CultureInfo.GetCultureInfo("ar-IQ"); // may still throw if not installed
+            var dateStr = aptTime.ToLocalTime().ToString("dd MMMM yyyy", culture);
+            var timeStr = aptTime.ToLocalTime().ToString("hh:mm tt", new System.Globalization.CultureInfo("ar-IQ")) ?? "غير متوفر";
+            var doctor = doctorName ?? "غير متوفر";
+            var address = doctorAddress ?? "غير متوفر";
+            var phone = DoctorPhoneNumber ?? "غير متوفر";
+            var subject = "New appointment booked";
+            var body = $@"
+                <!DOCTYPE html>
+                <html lang=""ar"" dir=""rtl"" style=""background: #f8fafb;"">
+                <head>
+                    <meta charset=""UTF-8"">
+                    <title>تأكيد الموعد</title>
+                    <!-- Tajawal font for Arabic, fallback to system fonts -->
+                    <link rel=""stylesheet"" href=""https://fonts.googleapis.com/css?family=Tajawal:wght@400;700&display=swap"">
+                </head>
+                <body style=""font-family: 'Tajawal', Arial, Helvetica, sans-serif; background-color: #f8fafb; margin: 0; padding: 0;"">
+                    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background-color: #f8fafb; padding: 40px 0;"">
+                        <tr>
+                            <td align=""center"">
+                                <table width=""420"" cellpadding=""0"" cellspacing=""0"" style=""background: #fff; border-radius: 18px; box-shadow: 0 2px 8px #e0e4e9; overflow: hidden;"">
+                                    <!-- Header / Brand -->
+                                    <tr>
+                                        <td align=""center"" style=""background: #eafaf0; padding: 24px 0;"">
+                                            <span style=""display:inline-block;background:#35ba7c;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
+                                                <svg width=""28"" height=""28"" fill=""none"" viewBox=""0 0 24 24"">
+                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#35ba7c""/>
+                                                    <path d=""M8.5 12.5l2.5 2.5 4.5-4.5"" stroke=""#fff"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""/>
+                                                </svg>
+                                            </span>
+                                            <div style=""font-size: 20px; font-weight: bold; color: #222; margin-top: 12px;"">صحتك</div>
+                                        </td>
+                                    </tr>
+                                    <!-- Main Content -->
+                                    <tr>
+                                        <td style=""padding: 32px 24px;"">
+                                            <h2 style=""margin: 0 0 12px 0; color: #222; font-size: 22px; font-weight: bold; text-align: right;"">
+                                                تم حجز موعد جديد بنجاح
+                                            </h2>
+                                            <p style=""margin: 0 0 8px 0; color: #555; font-size: 16px;"">شكرًا لاختياركم منصة صحتك. تفاصيل موعدكم كالتالي:</p>
+                                            <div style=""background: #eafaf0; border-radius: 10px; padding: 18px 15px; margin: 12px 0 18px 0; color: #258f62; font-size: 16px;"">
+                                                <strong>التاريخ:</strong>
+                                                <span>
+                                                    {dateStr}
+                                                </span>
+                                                <br>
+                                                <strong>الوقت:</strong>
+                                                <span>
+                                                    {timeStr}
+                                                </span>
+                                                <br>
+                                                <strong>الطبيب:</strong>
+                                                <span>
+                                                    {doctor}
+                                                </span>
+                                                <br>
+                                                <strong>العنوان:</strong>
+                                                <span>
+                                                    {address}
+                                                </span>
+                                                <br>
+                                                <strong>هاتف الطبيب:</strong>
+                                                <span>
+                                                    {phone}
+                                                </span>
+                                            </div>
+                                            <!-- Guidance section -->
+                                            <div style=""background: #f4f7fa; border-radius: 10px; padding: 16px 12px; color: #31786a; font-size: 15px; margin-bottom: 18px;"">
+                                                <strong>إرشادات لتغيير أو إلغاء الموعد:</strong>
+                                                <ul style=""padding-right: 20px; margin: 8px 0 0 0; color: #31786a;"">
+                                                    <li>قم بتسجيل الدخول إلى منصة صحتك.</li>
+                                                    <li>اختر ""مواعيدي"" من القائمة.</li>
+                                                    <li>حدد الموعد الذي ترغب في تعديله أو إلغائه.</li>
+                                                    <li>يمكنك إلغاء أو إعادة جدولة الموعد من صفحة التفاصيل.</li>
+                                                </ul>
+                                            </div>
+                                            <hr style=""border: none; border-top: 1px solid #e0e4e9; margin: 18px 0;"">
+                                            <p style=""color: #999; font-size: 14px; text-align: right;"">
+                                                مع أطيب التحيات،<br>
+                                                فريق منصة صحتك
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div style=""margin-top: 18px; color: #b3b3b3; font-size: 12px; text-align: center;"">
+                                    جميع الحقوق محفوظة © صحتك {DateTime.Now.Year}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>";
+
+            await SendEmailAsync(email, subject, body);
+        }
+
+        public async Task SendAppointmentChanged(string email, DateTime aptTimeOld, DateTime aptTimeNew, string doctorName, string doctorAddress, string DoctorPhoneNumber)
+        {
+            var culture = System.Globalization.CultureInfo.GetCultureInfo("ar-IQ"); // may still throw if not installed
+            var dateStrOld = aptTimeOld.ToLocalTime().ToString("dd MMMM yyyy", culture);
+            var dateStrNew = aptTimeNew.ToLocalTime().ToString("dd MMMM yyyy", culture);
+            var timeStrOld = aptTimeOld.ToLocalTime().ToString("hh:mm tt", new System.Globalization.CultureInfo("ar-IQ")) ?? "غير متوفر";
+            var timeStrNew = aptTimeNew.ToLocalTime().ToString("hh:mm tt", new System.Globalization.CultureInfo("ar-IQ")) ?? "غير متوفر";
+            var doctor = doctorName ?? "غير متوفر";
+            var address = doctorAddress ?? "غير متوفر";
+            var phone = DoctorPhoneNumber ?? "غير متوفر";
+            var subject = "Appointment changed";
+            var body = $@"
+                <!DOCTYPE html>
+                <html lang=""ar"" dir=""rtl"" style=""background: #f8fafb;"">
+                <head>
+                    <meta charset=""UTF-8"">
+                    <title>تغيير وقت الموعد</title>
+                    <link rel=""stylesheet"" href=""https://fonts.googleapis.com/css?family=Tajawal:wght@400;700&display=swap"">
+                </head>
+                <body style=""font-family: 'Tajawal', Arial, Helvetica, sans-serif; background-color: #f8fafb; margin: 0; padding: 0;"">
+                    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background-color: #f8fafb; padding: 40px 0;"">
+                        <tr>
+                            <td align=""center"">
+                                <table width=""520"" cellpadding=""0"" cellspacing=""0"" style=""background: #fff; border-radius: 18px; box-shadow: 0 2px 8px #e0e4e9; overflow: hidden;"">
+                                    <tr>
+                                        <td align=""center"" style=""background: #eafaf0; padding: 24px 0;"">
+                                            <span style=""display:inline-block;background:#35ba7c;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
+                                                <svg width=""28"" height=""28"" fill=""none"" viewBox=""0 0 24 24"">
+                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#35ba7c""/>
+                                                    <path d=""M8.5 12.5l2.5 2.5 4.5-4.5"" stroke=""#fff"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""/>
+                                                </svg>
+                                            </span>
+                                            <div style=""font-size: 20px; font-weight: bold; color: #222; margin-top: 12px;"">صحتك</div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style=""padding: 32px 24px;"">
+                                            <h2 style=""margin: 0 0 12px 0; color: #222; font-size: 22px; font-weight: bold; text-align: right;"">
+                                                تم تغيير وقت الموعد بنجاح
+                                            </h2>
+                                            <p style=""margin: 0 0 8px 0; color: #555; font-size: 16px;"">تم تغيير وقت موعدك. التفاصيل كالتالي:</p>
+                                            <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""margin-bottom: 18px;"">
+                                                <tr>
+                                                    <td valign=""top"" style=""width:48%;background:#f4f7fa;border-radius:10px;padding:12px 10px;margin:0 1%;color:#31786a;font-size:15px;"">
+                                                        <strong>الوقت القديم</strong><br>
+                                                        <strong>التاريخ:</strong>
+                                                        <span>{dateStrOld}</span><br>
+                                                        <strong>الوقت:</strong>
+                                                        <span>{timeStrOld}</span><br>
+                                                        <strong>الطبيب:</strong>
+                                                        <span>{doctor}</span><br>
+                                                        <strong>العنوان:</strong>
+                                                        <span>{address}</span><br>
+                                                        <strong>هاتف الطبيب:</strong>
+                                                        <span>{phone}</span>
+                                                    </td>
+                                                    <td style=""width:4%;""></td>
+                                                    <td valign=""top"" style=""width:48%;background:#eafaf0;border-radius:10px;padding:12px 10px;margin:0 1%;color:#258f62;font-size:15px;"">
+                                                        <strong>الوقت الجديد</strong><br>
+                                                        <strong>التاريخ:</strong>
+                                                        <span>{dateStrNew}</span><br>
+                                                        <strong>الوقت:</strong>
+                                                        <span>{timeStrNew}</span><br>
+                                                        <strong>الطبيب:</strong>
+                                                        <span>{doctor}</span><br>
+                                                        <strong>العنوان:</strong>
+                                                        <span>{address}</span><br>
+                                                        <strong>هاتف الطبيب:</strong>
+                                                        <span>{phone}</span>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            <div style=""background: #f4f7fa; border-radius: 10px; padding: 16px 12px; color: #31786a; font-size: 15px; margin-bottom: 18px;"">
+                                                <strong>لإلغاء أو إعادة جدولة الموعد:</strong>
+                                                <ul style=""padding-right: 20px; margin: 8px 0 0 0; color: #31786a;"">
+                                                    <li>سجّل الدخول إلى منصة صحتك.</li>
+                                                    <li>انتقل إلى ""مواعيدي"".</li>
+                                                    <li>اختر الموعد المطلوب.</li>
+                                                    <li>يمكنك الإلغاء أو إعادة الجدولة من صفحة التفاصيل.</li>
+                                                </ul>
+                                            </div>
+                                            <hr style=""border: none; border-top: 1px solid #e0e4e9; margin: 18px 0;"">
+                                            <p style=""color: #999; font-size: 14px; text-align: right;"">
+                                                مع أطيب التحيات،<br>
+                                                فريق منصة صحتك
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div style=""margin-top: 18px; color: #b3b3b3; font-size: 12px; text-align: center;"">
+                                    جميع الحقوق محفوظة © صحتك {{DateTime.Now.Year}}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>";
+
+            await SendEmailAsync(email, subject, body);
+        }
+
+        public async Task SendAppointmentDeleted(string email, DateTime aptTime, string doctorName, string doctorAddress, string DoctorPhoneNumber)
+        {
+            var culture = System.Globalization.CultureInfo.GetCultureInfo("ar-IQ"); // may still throw if not installed
+            var dateStr = aptTime.ToLocalTime().ToString("dd MMMM yyyy", culture);
+            var timeStr = aptTime.ToLocalTime().ToString("hh:mm tt", new System.Globalization.CultureInfo("ar-IQ")) ?? "غير متوفر";
+            var doctor = doctorName ?? "غير متوفر";
+            var address = doctorAddress ?? "غير متوفر";
+            var phone = DoctorPhoneNumber ?? "غير متوفر";
+            var subject = "Appointment deleted";
+            var body = $@"
+                <!DOCTYPE html>
+                <html lang=""ar"" dir=""rtl"" style=""background: #f8fafb;"">
+                <head>
+                    <meta charset=""UTF-8"">
+                    <title>إلغاء الموعد</title>
+                    <link rel=""stylesheet"" href=""https://fonts.googleapis.com/css?family=Tajawal:wght@400;700&display=swap"">
+                </head>
+                <body style=""font-family: 'Tajawal', Arial, Helvetica, sans-serif; background-color: #f8fafb; margin: 0; padding: 0;"">
+                    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background-color: #f8fafb; padding: 40px 0;"">
+                        <tr>
+                            <td align=""center"">
+                                <table width=""420"" cellpadding=""0"" cellspacing=""0"" style=""background: #fff; border-radius: 18px; box-shadow: 0 2px 8px #e0e4e9; overflow: hidden;"">
+                                    <tr>
+                                        <td align=""center"" style=""background: #eafaf0; padding: 24px 0;"">
+                                            <span style=""display:inline-block;background:#35ba7c;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
+                                                <svg width=""28"" height=""28"" fill=""none"" viewBox=""0 0 24 24"">
+                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#35ba7c""/>
+                                                    <path d=""M8.5 12.5l2.5 2.5 4.5-4.5"" stroke=""#fff"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""/>
+                                                </svg>
+                                            </span>
+                                            <div style=""font-size: 20px; font-weight: bold; color: #222; margin-top: 12px;"">صحتك</div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style=""padding: 32px 24px;"">
+                                            <h2 style=""margin: 0 0 12px 0; color: #d83a3a; font-size: 22px; font-weight: bold; text-align: right;"">
+                                                تم إلغاء الموعد بنجاح
+                                            </h2>
+                                            <p style=""margin: 0 0 8px 0; color: #555; font-size: 16px;"">تم إلغاء موعدك بنجاح. نأمل أن نراك قريباً في منصة صحتك.</p>
+                                            <div style=""background: #ffeaea; border-radius: 10px; padding: 18px 15px; margin: 12px 0 18px 0; color: #d83a3a; font-size: 16px;"">
+                                                <strong>التفاصيل الملغاة:</strong><br>
+                                                <strong>التاريخ:</strong>
+                                                <span>
+                                                    {dateStr}
+                                                </span>
+                                                <br>
+                                                <strong>الوقت:</strong>
+                                                <span>
+                                                    {timeStr}
+                                                </span>
+                                                <br>
+                                                <strong>الطبيب:</strong>
+                                                <span>{doctor}</span>
+                                                <br>
+                                                <strong>العنوان:</strong>
+                                                <span>{address}</span>
+                                                <br>
+                                                <strong>هاتف الطبيب:</strong>
+                                                <span>{phone}</span>
+                                            </div>
+                                            <div style=""background: #f4f7fa; border-radius: 10px; padding: 16px 12px; color: #31786a; font-size: 15px; margin-bottom: 18px;"">
+                                                <strong>لإعادة حجز موعد جديد:</strong>
+                                                <ul style=""padding-right: 20px; margin: 8px 0 0 0; color: #31786a;"">
+                                                    <li>توجه إلى منصة صحتك وسجّل الدخول.</li>
+                                                    <li>ابحث عن الطبيب الذي ترغب في الحجز لديه.</li>
+                                                    <li>احجز موعداً جديداً بسهولة.</li>
+                                                </ul>
+                                            </div>
+                                            <hr style=""border: none; border-top: 1px solid #e0e4e9; margin: 18px 0;"">
+                                            <p style=""color: #999; font-size: 14px; text-align: right;"">
+                                                مع أطيب التحيات،<br>
+                                                فريق منصة صحتك
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div style=""margin-top: 18px; color: #b3b3b3; font-size: 12px; text-align: center;"">
+                                    جميع الحقوق محفوظة © صحتك {{DateTime.Now.Year}}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>";
+
+            await SendEmailAsync(email, subject, body);
+        }
+
+        public async Task SendEmailConfirmationAsync(string email, string confirmationLink)
+        {
+            var subject = "Confirm your Medicare API account";
+            var body = $@"
+                <html>
+                <body>
+                    <h2>Welcome to Medicare API</h2>
+                    <p>Please confirm your email address by clicking the link below:</p>
+                    <p><a href='{confirmationLink}'>Confirm Email Address</a></p>
+                    <p>If you didn't create this account, you can safely ignore this email.</p>
+                    <br>
+                    <p>Best regards,<br>Medicare API Team</p>
+                </body>
+                </html>";
+            
+            await SendEmailAsync(email, subject, body);
+        }
+
+        public async Task SendPasswordResetAsync(string email, string resetLink)
+        {
+            var subject = "Reset your Medicare API password";
+            var body = $@"
+                <html>
+                <body>
+                    <h2>Password Reset Request</h2>
+                    <p>You requested to reset your password. Click the link below to set a new password:</p>
+                    <p><a href='{resetLink}'>Reset Password</a></p>
+                    <p>This link will expire in 24 hours.</p>
+                    <p>If you didn't request this password reset, you can safely ignore this email.</p>
+                    <br>
+                    <p>Best regards,<br>Medicare API Team</p>
+                </body>
+                </html>";
+            
+            await SendEmailAsync(email, subject, body);
+        }
+
+        public async Task<bool> SendEmailAsync(string to, string subject, string body)
+        {
+            try
+            {
+                var smtpSettings = _configuration.GetSection("SmtpSettings");
+                
+                using var client = new SmtpClient(smtpSettings["Host"])
+                {
+                    Port = int.Parse(smtpSettings["Port"] ?? "587"),
+                    Credentials = new NetworkCredential(
+                        smtpSettings["Username"],
+                        smtpSettings["Password"]),
+                    EnableSsl = bool.Parse(smtpSettings["EnableSsl"] ?? "true")
+                };
+
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(smtpSettings["FromEmail"] ?? smtpSettings["Username"]!, 
+                                         smtpSettings["FromName"] ?? "Medicare API"),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                };
+                
+                mailMessage.To.Add(to);
+
+                await client.SendMailAsync(mailMessage);
+                _logger.LogInformation("Email sent successfully to {Email}", to);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send email to {Email}", to);
+                return false;
+            }
+        }
+    }
+}

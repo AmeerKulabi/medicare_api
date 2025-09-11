@@ -3,6 +3,7 @@ using MedicareApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MedicareApi.Services;
 
 namespace MedicareApi.Controllers
 {
@@ -13,9 +14,15 @@ namespace MedicareApi.Controllers
     {
         private readonly ApplicationDbContext _db;
 
-        public PatientAppointmentController(ApplicationDbContext db)
+        /// <summary>
+        /// Email service.
+        /// </summary>
+        private readonly IEmailService _emailService;
+
+        public PatientAppointmentController(ApplicationDbContext db, IEmailService emailService)
         {
             _db = db;
+            _emailService = emailService;
         }
 
         [HttpDelete("{id}")]
@@ -30,8 +37,12 @@ namespace MedicareApi.Controllers
             var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id && a.PatientId == userId);
             if (appt == null) return NotFound();
 
+            Doctor doctor = doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.Id == appt.DoctorId);
+
             _db.Appointments.Remove(appt);
             await _db.SaveChangesAsync();
+            if(_emailService != null )
+                _emailService.SendAppointmentDeleted(User.Identity.Name, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, doctor.Phone);
             return NoContent();
         }
 
