@@ -32,4 +32,11 @@ namespace MedicareApi.ViewModels
         public bool IsActive { get; set; }
         public bool RegistrationCompleted { get; set; }
     }
+
+    public class ConfirmEmailResponse
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string? UserId { get; set; }
+    }
 }

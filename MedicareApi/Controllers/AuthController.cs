@@ -191,5 +191,101 @@ namespace MedicareApi.Controllers
                 return BadRequest();
             }
         }
+
+        /// <summary>
+        /// Confirms user email using the provided token.
+        /// </summary>
+        /// <param name="token">Email confirmation token</param>
+        /// <returns>Confirmation result</returns>
+        [HttpGet("confirm")]
+        public async Task<IActionResult> ConfirmEmail([FromQuery] string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return BadRequest(new ConfirmEmailResponse
+                {
+                    Success = false,
+                    Message = "Token is required."
+                });
+            }
+
+            try
+            {
+                // Decode the token to extract user ID (tokens are usually base64 encoded with user info)
+                // We need to find the user first, then validate the token
+                // For security, we'll need to iterate through potential users or require user ID in the token
+                
+                // Since we don't have the user ID directly from the token in a secure way,
+                // we'll need to extract it from the token structure
+                var tokenHandler = new JwtSecurityTokenHandler();
+                
+                // ASP.NET Core Identity tokens are not JWT tokens, they are data protection tokens
+                // We need to find a way to associate the token with a user
+                // The standard approach would be to pass both userId and token, but the requirement is just token
+                
+                // For now, let's try to find all unconfirmed users and check the token against each
+                // This is not the most efficient but works for the requirement
+                
+                var unconfirmedUsers = _userManager.Users.Where(u => !u.EmailConfirmed).ToList();
+                
+                foreach (var user in unconfirmedUsers)
+                {
+                    var isValidToken = await _userManager.VerifyUserTokenAsync(
+                        user, 
+                        _userManager.Options.Tokens.EmailConfirmationTokenProvider, 
+                        "EmailConfirmation", 
+                        token);
+                        
+                    if (isValidToken)
+                    {
+                        if (user.EmailConfirmed)
+                        {
+                            return Ok(new ConfirmEmailResponse
+                            {
+                                Success = false,
+                                Message = "Email is already confirmed.",
+                                UserId = user.Id
+                            });
+                        }
+
+                        var confirmResult = await _userManager.ConfirmEmailAsync(user, token);
+                        if (confirmResult.Succeeded)
+                        {
+                            return Ok(new ConfirmEmailResponse
+                            {
+                                Success = true,
+                                Message = "Email confirmed successfully.",
+                                UserId = user.Id
+                            });
+                        }
+                        else
+                        {
+                            return BadRequest(new ConfirmEmailResponse
+                            {
+                                Success = false,
+                                Message = "Failed to confirm email."
+                            });
+                        }
+                    }
+                }
+                
+                // No valid token found
+                return BadRequest(new ConfirmEmailResponse
+                {
+                    Success = false,
+                    Message = "Invalid or expired token."
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception in a real application
+                Console.WriteLine($"Email confirmation error: {ex.Message}");
+                return BadRequest(new ConfirmEmailResponse
+                {
+                    Success = false,
+                    Message = "An error occurred while confirming email."
+                });
+            }
+        }
     }
 }

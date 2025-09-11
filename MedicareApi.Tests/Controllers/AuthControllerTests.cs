@@ -386,6 +386,141 @@ namespace MedicareApi.Tests.Controllers
             Assert.IsType<NotFoundObjectResult>(result);
         }
 
+        [Fact]
+        public async Task ConfirmEmail_WithValidToken_ReturnsSuccess()
+        {
+            // Arrange
+            var user = new ApplicationUser
+            {
+                Id = "test-user-id",
+                Email = "test@test.com",
+                EmailConfirmed = false
+            };
+
+            var userStore = new Mock<IUserStore<ApplicationUser>>();
+            var userManager = new Mock<UserManager<ApplicationUser>>(
+                userStore.Object, null, null, null, null, null, null, null, null);
+
+            // Setup to return unconfirmed users
+            var unconfirmedUsers = new List<ApplicationUser> { user }.AsQueryable();
+            userManager.Setup(um => um.Users).Returns(unconfirmedUsers);
+            userManager.Setup(um => um.VerifyUserTokenAsync(
+                It.IsAny<ApplicationUser>(), 
+                It.IsAny<string>(), 
+                "EmailConfirmation", 
+                "valid-token"))
+                .ReturnsAsync(true);
+            userManager.Setup(um => um.ConfirmEmailAsync(It.IsAny<ApplicationUser>(), "valid-token"))
+                .ReturnsAsync(IdentityResult.Success);
+            userManager.Setup(um => um.Options)
+                .Returns(new IdentityOptions());
+
+            var controller = CreateAuthController(userManager.Object);
+
+            // Act
+            var result = await controller.ConfirmEmail("valid-token");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<ConfirmEmailResponse>(okResult.Value);
+            Assert.True(response.Success);
+            Assert.Equal("Email confirmed successfully.", response.Message);
+            Assert.Equal(user.Id, response.UserId);
+        }
+
+        [Fact]
+        public async Task ConfirmEmail_WithInvalidToken_ReturnsBadRequest()
+        {
+            // Arrange
+            var user = new ApplicationUser
+            {
+                Id = "test-user-id",
+                Email = "test@test.com",
+                EmailConfirmed = false
+            };
+
+            var userStore = new Mock<IUserStore<ApplicationUser>>();
+            var userManager = new Mock<UserManager<ApplicationUser>>(
+                userStore.Object, null, null, null, null, null, null, null, null);
+
+            var unconfirmedUsers = new List<ApplicationUser> { user }.AsQueryable();
+            userManager.Setup(um => um.Users).Returns(unconfirmedUsers);
+            userManager.Setup(um => um.VerifyUserTokenAsync(
+                It.IsAny<ApplicationUser>(), 
+                It.IsAny<string>(), 
+                "EmailConfirmation", 
+                "invalid-token"))
+                .ReturnsAsync(false);
+            userManager.Setup(um => um.Options)
+                .Returns(new IdentityOptions());
+
+            var controller = CreateAuthController(userManager.Object);
+
+            // Act
+            var result = await controller.ConfirmEmail("invalid-token");
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            var response = Assert.IsType<ConfirmEmailResponse>(badRequestResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal("Invalid or expired token.", response.Message);
+        }
+
+        [Fact]
+        public async Task ConfirmEmail_WithEmptyToken_ReturnsBadRequest()
+        {
+            // Arrange
+            var controller = CreateAuthController();
+
+            // Act
+            var result = await controller.ConfirmEmail("");
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            var response = Assert.IsType<ConfirmEmailResponse>(badRequestResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal("Token is required.", response.Message);
+        }
+
+        [Fact]
+        public async Task ConfirmEmail_WithAlreadyConfirmedUser_ReturnsAlreadyConfirmed()
+        {
+            // Arrange
+            var user = new ApplicationUser
+            {
+                Id = "test-user-id",
+                Email = "test@test.com",
+                EmailConfirmed = true // Already confirmed
+            };
+
+            var userStore = new Mock<IUserStore<ApplicationUser>>();
+            var userManager = new Mock<UserManager<ApplicationUser>>(
+                userStore.Object, null, null, null, null, null, null, null, null);
+
+            var unconfirmedUsers = new List<ApplicationUser> { user }.AsQueryable();
+            userManager.Setup(um => um.Users).Returns(unconfirmedUsers);
+            userManager.Setup(um => um.VerifyUserTokenAsync(
+                It.IsAny<ApplicationUser>(), 
+                It.IsAny<string>(), 
+                "EmailConfirmation", 
+                "valid-token"))
+                .ReturnsAsync(true);
+            userManager.Setup(um => um.Options)
+                .Returns(new IdentityOptions());
+
+            var controller = CreateAuthController(userManager.Object);
+
+            // Act
+            var result = await controller.ConfirmEmail("valid-token");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var response = Assert.IsType<ConfirmEmailResponse>(okResult.Value);
+            Assert.False(response.Success);
+            Assert.Equal("Email is already confirmed.", response.Message);
+            Assert.Equal(user.Id, response.UserId);
+        }
+
         public void Dispose()
         {
             _context?.Dispose();
