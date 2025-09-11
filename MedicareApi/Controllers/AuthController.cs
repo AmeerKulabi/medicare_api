@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Numerics;
 using System.Security.Claims;
@@ -198,7 +199,7 @@ namespace MedicareApi.Controllers
         /// <param name="token">Email confirmation token</param>
         /// <returns>Confirmation result</returns>
         [HttpGet("confirm")]
-        public async Task<IActionResult> ConfirmEmail([FromQuery] string token)
+        public async Task<IActionResult> ConfirmEmail([FromQuery][Required] string token)
         {
             if (string.IsNullOrWhiteSpace(token))
             {
@@ -211,21 +212,9 @@ namespace MedicareApi.Controllers
 
             try
             {
-                // Decode the token to extract user ID (tokens are usually base64 encoded with user info)
-                // We need to find the user first, then validate the token
-                // For security, we'll need to iterate through potential users or require user ID in the token
-                
-                // Since we don't have the user ID directly from the token in a secure way,
-                // we'll need to extract it from the token structure
-                var tokenHandler = new JwtSecurityTokenHandler();
-                
-                // ASP.NET Core Identity tokens are not JWT tokens, they are data protection tokens
-                // We need to find a way to associate the token with a user
-                // The standard approach would be to pass both userId and token, but the requirement is just token
-                
-                // For now, let's try to find all unconfirmed users and check the token against each
-                // This is not the most efficient but works for the requirement
-                
+                // Find all unconfirmed users and validate the token against each
+                // Note: This approach works for the requirement but for production applications,
+                // consider passing userId as a separate parameter for better performance
                 var unconfirmedUsers = _userManager.Users.Where(u => !u.EmailConfirmed).ToList();
                 
                 foreach (var user in unconfirmedUsers)
