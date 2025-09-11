@@ -2,6 +2,7 @@ using MedicareApi.Controllers;
 using MedicareApi.Data;
 using MedicareApi.Models;
 using MedicareApi.ViewModels;
+using MedicareApi.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -76,7 +77,9 @@ namespace MedicareApi.Tests.Controllers
             var signInManager = new Mock<SignInManager<ApplicationUser>>(
                 um, Mock.Of<IHttpContextAccessor>(), Mock.Of<IUserClaimsPrincipalFactory<ApplicationUser>>(), null, null, null, null);
             
-            return new AuthController(um, signInManager.Object, _configurationMock.Object, _context);
+            var mockEmailService = new Mock<IEmailService>();
+            
+            return new AuthController(um, signInManager.Object, _configurationMock.Object, _context, mockEmailService.Object);
         }
 
         private void SetupConfiguration()

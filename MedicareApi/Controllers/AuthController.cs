@@ -1,6 +1,7 @@
 ﻿using MedicareApi.Data;
 using MedicareApi.Models;
 using MedicareApi.ViewModels;
+using MedicareApi.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Numerics;
 using System.Security.Claims;
 using System.Text;
+using System.Web;
 
 namespace MedicareApi.Controllers
 {
@@ -41,19 +43,26 @@ namespace MedicareApi.Controllers
         private readonly ApplicationDbContext _db;
 
         /// <summary>
+        /// Email service.
+        /// </summary>
+        private readonly IEmailService _emailService;
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="userManager">Identity framework, user manager.</param>
         /// <param name="signInManager">Identity framework, sign in manager.</param>
         /// <param name="configuration">Configuration mananger.</param>
         /// <param name="db">Access db.</param>
+        /// <param name="emailService">Email service.</param>
         public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration,
-            ApplicationDbContext db)
+            ApplicationDbContext db, IEmailService emailService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _db = db;
+            _emailService = emailService;
         }
 
         /// <summary>
@@ -189,6 +198,96 @@ namespace MedicareApi.Controllers
             {
                 Console.WriteLine(e);
                 return BadRequest();
+            }
+        }
+
+        /// <summary>
+        /// Sends a password reset email to the user.
+        /// </summary>
+        /// <param name="model">Forgot password request model</param>
+        /// <returns></returns>
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(MedicareApi.ViewModels.ForgotPasswordRequest model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    // For security, don't reveal that the user doesn't exist
+                    return Ok(new { message = "إذا كان البريد الإلكتروني مسجلاً في النظام، فستتلقى رسالة إعادة تعيين كلمة المرور." });
+                }
+
+                // Generate password reset token
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                
+                // URL encode the token for safe transmission
+                var encodedToken = HttpUtility.UrlEncode(token);
+                var encodedEmail = HttpUtility.UrlEncode(model.Email);
+                
+                // Create reset link (you may need to adjust this URL based on your frontend)
+                var resetLink = $"{_configuration["AppSettings:FrontendUrl"] ?? "http://localhost:3000"}/reset-password?token={encodedToken}&email={encodedEmail}";
+                
+                var appName = _configuration["AppSettings:AppName"] ?? "Medicare App";
+                
+                // Send password reset email
+                await _emailService.SendPasswordResetEmailAsync(model.Email, resetLink, appName);
+
+                return Ok(new { message = "إذا كان البريد الإلكتروني مسجلاً في النظام، فستتلقى رسالة إعادة تعيين كلمة المرور." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "حدث خطأ أثناء إرسال رسالة إعادة تعيين كلمة المرور." });
+            }
+        }
+
+        /// <summary>
+        /// Resets the user's password using the reset token.
+        /// </summary>
+        /// <param name="model">Reset password request model</param>
+        /// <returns></returns>
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(MedicareApi.ViewModels.ResetPasswordRequest model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    return BadRequest(new { message = "البريد الإلكتروني غير صحيح." });
+                }
+
+                // URL decode the token
+                var decodedToken = HttpUtility.UrlDecode(model.Token);
+                
+                // Reset the password
+                var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.NewPassword);
+                
+                if (result.Succeeded)
+                {
+                    return Ok(new { message = "تم إعادة تعيين كلمة المرور بنجاح." });
+                }
+                else
+                {
+                    var errors = result.Errors.Select(e => e.Description).ToList();
+                    return BadRequest(new { message = "فشل في إعادة تعيين كلمة المرور.", errors });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, new { message = "حدث خطأ أثناء إعادة تعيين كلمة المرور." });
             }
         }
     }
