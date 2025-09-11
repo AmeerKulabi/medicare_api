@@ -71,6 +71,11 @@ namespace MedicareApi.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAppointment([FromBody] Appointment appointment)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var userId = User.FindFirst("uid")?.Value;
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
             
@@ -114,6 +119,11 @@ namespace MedicareApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateAppointment([FromRoute] string id, [FromBody] UpdateAppointment updates)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var userId = User.FindFirst("uid")?.Value;
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
             

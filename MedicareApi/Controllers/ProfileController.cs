@@ -47,41 +47,49 @@ namespace MedicareApi.Controllers
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
             if (doctor == null) return NotFound();
 
-            // Only update allowed fields - restrict to specific properties only
-            if (updateDto.Email != null) doctor.Email = updateDto.Email;
-            if (updateDto.Phone != null) doctor.Phone = updateDto.Phone;
-            if (updateDto.ProfessionalBiography != null) doctor.ProfessionalBiography = updateDto.ProfessionalBiography;
-            if (updateDto.Languages != null) doctor.Languages = updateDto.Languages;
-            
-            // Education & Training fields
+            // Map fields from DTO to Doctor entity
+            if (updateDto.DateOfBirth.HasValue) doctor.DateOfBirth = updateDto.DateOfBirth.ToString();
+            if (updateDto.Gender != null) doctor.Gender = updateDto.Gender;
+            if (updateDto.MedicalLicense != null) doctor.MedicalLicense = updateDto.MedicalLicense;
+            if (updateDto.LicenseState != null) doctor.LicenseState = updateDto.LicenseState;
+            if (updateDto.LicenseExpiry.HasValue) doctor.LicenseExpiry = updateDto.LicenseExpiry.ToString();
+
+            if (updateDto.Specialization != null) doctor.Specialization = updateDto.Specialization;
+            if (updateDto.SubSpecialization != null) doctor.SubSpecialization = updateDto.SubSpecialization;
+            if (updateDto.YearsOfExperience != null) doctor.YearsOfExperience = updateDto.YearsOfExperience;
+
             if (updateDto.MedicalSchool != null) doctor.MedicalSchool = updateDto.MedicalSchool;
             if (updateDto.GraduationYear != null) doctor.GraduationYear = updateDto.GraduationYear;
-            if (updateDto.ResidencyProgram != null) doctor.ResidencyProgram = updateDto.ResidencyProgram;
-            if (updateDto.ResidencyHospital != null) doctor.ResidencyHospital = updateDto.ResidencyHospital;
-            if (updateDto.FellowshipProgram != null) doctor.FellowshipProgram = updateDto.FellowshipProgram;
-            if (updateDto.Location != null) doctor.Location = updateDto.Location;
-            
-            // Hospital and clinic information
-            if (updateDto.HospitalAffiliations != null) doctor.HospitalAffiliations = updateDto.HospitalAffiliations;
-            if (updateDto.ClinicName != null) doctor.ClinicName = updateDto.ClinicName;
-            if (updateDto.ClinicAddress != null) doctor.ClinicAddress = updateDto.ClinicAddress;
-            if (updateDto.ClinicPhone != null) doctor.ClinicPhone = updateDto.ClinicPhone;
-            if (updateDto.ConsultationFee != null) doctor.ConsultationFee = updateDto.ConsultationFee;
-            if (updateDto.YearsOfExperience != null) doctor.YearsOfExperience = updateDto.YearsOfExperience;
-            if (updateDto.Specialization != null) doctor.Specialization = updateDto.Specialization;
-            if(!doctor.RegistrationCompleted) doctor.RegistrationCompleted = true;
+            if (updateDto.Bio != null) doctor.ProfessionalBiography = updateDto.Bio;
 
-            #if DEBUG
-            if(!doctor.IsActive) doctor.IsActive = true;
-            #endif
+            if (updateDto.ClinicName != null) doctor.ClinicName = updateDto.ClinicName;
+            if (updateDto.PracticeType != null) doctor.PracticeType = updateDto.PracticeType;
+            if (updateDto.ServicesOffered != null) doctor.ServicesOffered = updateDto.ServicesOffered;
+
+            if (updateDto.ConsultationFee != null) doctor.ConsultationFee = updateDto.ConsultationFee;
+            if (updateDto.Availability != null) doctor.Availability = updateDto.Availability;
+            if (updateDto.Languages != null) doctor.Languages = updateDto.Languages;
+
+            if (updateDto.TermsAccepted.HasValue) doctor.TermsAccepted = updateDto.TermsAccepted.Value;
+            if (updateDto.PrivavyAccepted.HasValue) doctor.PrivacyAccepted = updateDto.PrivavyAccepted;
+
+            if (updateDto.ProfilePictureUrl != null)
+                doctor.ProfilePictureUrl = updateDto.ProfilePictureUrl;
+
+            if (!doctor.RegistrationCompleted) doctor.RegistrationCompleted = true;
+
+#if DEBUG
+            if (!doctor.IsActive) doctor.IsActive = true;
+#endif
 
             await _db.SaveChangesAsync();
-            
-            // Ensure profile picture URL includes default if none set
+
             doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
-            
+
             return Ok(doctor);
         }
+
+
 
         [HttpPost("upload-picture")]
         public async Task<IActionResult> UploadProfilePicture(IFormFile profilePicture)

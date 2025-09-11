@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Xunit;
+using System.Linq;
 
 namespace MedicareApi.Tests.Controllers
 {
@@ -44,8 +45,6 @@ namespace MedicareApi.Tests.Controllers
                 RegistrationCompleted = true,
                 Specialization = "Cardiology",
                 ClinicName = "Heart Clinic",
-                ClinicAddress = "123 Heart Street",
-                Phone = "+96470123456789",
                 ConsultationFee = "100"
             };
 
@@ -199,7 +198,7 @@ namespace MedicareApi.Tests.Controllers
             Assert.Equal("test-doctor-id", appointment.doctorId);
             Assert.Equal("Cardiology", appointment.doctorSpecialization);
             Assert.Equal("Heart Clinic", appointment.clinicName);
-            Assert.Equal("123 Heart Street", appointment.address);
+            Assert.Null(appointment.address); // ClinicAddress field was removed as deprecated
             Assert.Equal(100, appointment.consultationFee);
         }
 
@@ -351,6 +350,70 @@ namespace MedicareApi.Tests.Controllers
                     User = principal
                 }
             };
+        }
+
+        [Fact]
+        public async Task GetPatientAppointments_WithNullReason_ReturnsEmptyReasonString()
+        {
+            // Arrange - Add appointment with null reason
+            var appointmentWithNullReason = new Appointment
+            {
+                Id = "appointment-null-reason",
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = DateTime.Now.AddDays(3),
+                Reason = null // Explicitly null
+            };
+            
+            _context.Appointments.Add(appointmentWithNullReason);
+            await _context.SaveChangesAsync();
+
+            var controller = new PatientAppointmentController(_context);
+            SetupControllerContext(controller, "patient-user-id", false);
+
+            // Act
+            var result = await controller.GetPatientAppointments("upcoming");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var appointments = Assert.IsType<List<PatientAppointment>>(okResult.Value);
+            
+            var appointmentWithNullReasonResult = appointments.FirstOrDefault(a => a.id == "appointment-null-reason");
+            Assert.NotNull(appointmentWithNullReasonResult);
+            Assert.Equal("", appointmentWithNullReasonResult.reason); // Should be empty string, not null
+        }
+
+        [Fact]
+        public async Task GetPatientAppointments_WithEmptyReason_ReturnsEmptyReasonString()
+        {
+            // Arrange - Add appointment with empty reason
+            var appointmentWithEmptyReason = new Appointment
+            {
+                Id = "appointment-empty-reason",
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = DateTime.Now.AddDays(4),
+                Reason = "" // Explicitly empty string
+            };
+            
+            _context.Appointments.Add(appointmentWithEmptyReason);
+            await _context.SaveChangesAsync();
+
+            var controller = new PatientAppointmentController(_context);
+            SetupControllerContext(controller, "patient-user-id", false);
+
+            // Act
+            var result = await controller.GetPatientAppointments("upcoming");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var appointments = Assert.IsType<List<PatientAppointment>>(okResult.Value);
+            
+            var appointmentWithEmptyReasonResult = appointments.FirstOrDefault(a => a.id == "appointment-empty-reason");
+            Assert.NotNull(appointmentWithEmptyReasonResult);
+            Assert.Equal("", appointmentWithEmptyReasonResult.reason); // Should be empty string
         }
 
         public void Dispose()

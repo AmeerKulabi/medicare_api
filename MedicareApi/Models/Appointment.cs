@@ -1,4 +1,6 @@
-﻿namespace MedicareApi.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace MedicareApi.Models
 {
     public class Appointment
     {
@@ -7,6 +9,8 @@
         public string DoctorId { get; set; }
         public DateTime ScheduledAt { get; set; }
         public string Status { get; set; } = "Booked"; // or Cancelled, etc.
+        
+        [StringLength(500, ErrorMessage = "Appointment reason must not exceed 500 characters")]
         public string? Reason { get; set; }
         // Add more fields (e.g., type, notes) as needed
     }

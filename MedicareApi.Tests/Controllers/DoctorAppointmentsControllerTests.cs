@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Moq;
 using Xunit;
+using MedicareApi.Tests.Helpers;
 
 namespace MedicareApi.Tests.Controllers
 {
@@ -423,6 +424,128 @@ namespace MedicareApi.Tests.Controllers
             Assert.IsType<OkObjectResult>(result);
         }
 
+        [Fact]
+        public async Task CreateAppointment_WithoutReason_CreatesSuccessfully()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "patient-user-id", false);
+            
+            var appointment = new Appointment
+            {
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                // Reason is intentionally not set (null)
+            };
+
+            // Act
+            var result = await controller.CreateAppointment(appointment);
+            
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var createdAppointment = Assert.IsType<Appointment>(okResult.Value);
+            Assert.Null(createdAppointment.Reason); // Reason should be null
+            Assert.Equal("patient-user-id", createdAppointment.PatientId);
+            Assert.Equal("test-doctor-id", createdAppointment.DoctorId);
+
+            // Verify appointment was saved to database
+            var dbAppointment = await _context.Appointments.FindAsync(createdAppointment.Id);
+            Assert.NotNull(dbAppointment);
+            Assert.Null(dbAppointment.Reason); // Reason should be null in the database too
+        }
+
+        [Fact]
+        public async Task CreateAppointment_WithEmptyReason_CreatesSuccessfully()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "patient-user-id", false);
+            
+            var appointment = new Appointment
+            {
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Reason = "" // Empty string
+            };
+
+            // Act
+            var result = await controller.CreateAppointment(appointment);
+            
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var createdAppointment = Assert.IsType<Appointment>(okResult.Value);
+            Assert.Equal("", createdAppointment.Reason); // Reason should be empty string
+            Assert.Equal("patient-user-id", createdAppointment.PatientId);
+            Assert.Equal("test-doctor-id", createdAppointment.DoctorId);
+
+            // Verify appointment was saved to database
+            var dbAppointment = await _context.Appointments.FindAsync(createdAppointment.Id);
+            Assert.NotNull(dbAppointment);
+            Assert.Equal("", dbAppointment.Reason); // Reason should be empty string in the database
+        }
+
+        [Fact]
+        public async Task UpdateAppointment_WithoutReason_UpdatesOtherFieldsSuccessfully()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+            var newScheduledTime = DateTime.Now.AddDays(5);
+            var update = new UpdateAppointment
+            {
+                Status = "rescheduled",
+                ScheduledAt = newScheduledTime
+                // Reason is intentionally not set (null)
+            };
+
+            // Act
+            var result = await controller.UpdateAppointment("appointment-1", update);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var updatedAppointment = Assert.IsType<Appointment>(okResult.Value);
+            Assert.Equal("rescheduled", updatedAppointment.Status);
+            Assert.Equal("Checkup", updatedAppointment.Reason); // Should keep original reason
+
+            // Verify data was persisted
+            var dbAppointment = await _context.Appointments.FindAsync("appointment-1");
+            Assert.NotNull(dbAppointment);
+            Assert.Equal("rescheduled", dbAppointment.Status);
+            Assert.Equal("Checkup", dbAppointment.Reason); // Should keep original reason
+        }
+
+        [Fact]
+        public async Task UpdateAppointment_WithEmptyReason_UpdatesReasonToEmpty()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+            var update = new UpdateAppointment
+            {
+                Status = "confirmed",
+                Reason = "" // Empty string should update the reason to empty
+            };
+
+            // Act
+            var result = await controller.UpdateAppointment("appointment-1", update);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var updatedAppointment = Assert.IsType<Appointment>(okResult.Value);
+            Assert.Equal("confirmed", updatedAppointment.Status);
+            Assert.Equal("", updatedAppointment.Reason); // Should be updated to empty string
+
+            // Verify data was persisted
+            var dbAppointment = await _context.Appointments.FindAsync("appointment-1");
+            Assert.NotNull(dbAppointment);
+            Assert.Equal("confirmed", dbAppointment.Status);
+            Assert.Equal("", dbAppointment.Reason); // Should be updated to empty string
+        }
+
         private void SetupControllerContext(ControllerBase controller, string userId, bool isDoctor)
         {
             var claims = new List<Claim>
@@ -455,6 +578,245 @@ namespace MedicareApi.Tests.Controllers
                     User = principal
                 }
             };
+        }
+
+        [Fact]
+        public async Task CreateAppointment_WithReasonExceeding500Characters_ReturnsBadRequest()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+
+            // Create a reason that is longer than 500 characters
+            var longReason = new string('x', 501); // 501 characters
+
+            var appointment = new Appointment
+            {
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = longReason
+            };
+
+            // Manually add validation error to ModelState to simulate real validation
+            controller.ModelState.AddModelError("Reason", "Appointment reason must not exceed 500 characters");
+
+            // Act
+            var result = await controller.CreateAppointment(appointment);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task CreateAppointment_WithReasonUnder500Characters_ReturnsOk()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+
+            // Create a reason that is exactly 500 characters
+            var validReason = new string('x', 500); // 500 characters
+
+            var appointment = new Appointment
+            {
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = validReason
+            };
+
+            // Act
+            var result = await controller.CreateAppointment(appointment);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task UpdateAppointment_WithReasonExceeding500Characters_ReturnsBadRequest()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+
+            // Create a reason that is longer than 500 characters
+            var longReason = new string('x', 501); // 501 characters
+
+            var updates = new UpdateAppointment
+            {
+                Reason = longReason
+            };
+
+            // Manually add validation error to ModelState to simulate real validation
+            controller.ModelState.AddModelError("Reason", "Appointment reason must not exceed 500 characters");
+
+            // Act
+            var result = await controller.UpdateAppointment("appointment-1", updates);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task UpdateAppointment_WithReasonUnder500Characters_ReturnsOk()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            SetupControllerContext(controller, "doctor-user-id", true);
+
+            // Create a reason that is exactly 500 characters
+            var validReason = new string('x', 500); // 500 characters
+
+            var updates = new UpdateAppointment
+            {
+                Reason = validReason
+            };
+
+            // Act
+            var result = await controller.UpdateAppointment("appointment-1", updates);
+
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+        }
+
+        [Fact]
+        public void Appointment_ReasonExceeds500Characters_ValidationFails()
+        {
+            // Arrange
+            var longReason = new string('x', 501); // 501 characters
+            var appointment = new Appointment
+            {
+                PatientId = "patient-1",
+                DoctorId = "doctor-1",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = longReason
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(appointment);
+
+            // Assert
+            Assert.Single(validationResults);
+            Assert.Equal("Appointment reason must not exceed 500 characters", validationResults[0].ErrorMessage);
+            Assert.Contains("Reason", validationResults[0].MemberNames);
+        }
+
+        [Fact]
+        public void Appointment_ReasonEquals500Characters_ValidationPasses()
+        {
+            // Arrange
+            var validReason = new string('x', 500); // exactly 500 characters
+            var appointment = new Appointment
+            {
+                PatientId = "patient-1",
+                DoctorId = "doctor-1",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = validReason
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(appointment);
+
+            // Assert
+            Assert.Empty(validationResults);
+        }
+
+        [Fact]
+        public void Appointment_ReasonUnder500Characters_ValidationPasses()
+        {
+            // Arrange
+            var validReason = new string('x', 499); // 499 characters
+            var appointment = new Appointment
+            {
+                PatientId = "patient-1",
+                DoctorId = "doctor-1",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = validReason
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(appointment);
+
+            // Assert
+            Assert.Empty(validationResults);
+        }
+
+        [Fact]
+        public void Appointment_ReasonIsNull_ValidationPasses()
+        {
+            // Arrange
+            var appointment = new Appointment
+            {
+                PatientId = "patient-1",
+                DoctorId = "doctor-1",
+                ScheduledAt = DateTime.Now.AddDays(1),
+                Status = "Booked",
+                Reason = null
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(appointment);
+
+            // Assert
+            Assert.Empty(validationResults);
+        }
+
+        [Fact]
+        public void UpdateAppointment_ReasonExceeds500Characters_ValidationFails()
+        {
+            // Arrange
+            var longReason = new string('x', 501); // 501 characters
+            var updateAppointment = new UpdateAppointment
+            {
+                Reason = longReason
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(updateAppointment);
+
+            // Assert
+            Assert.Single(validationResults);
+            Assert.Equal("Appointment reason must not exceed 500 characters", validationResults[0].ErrorMessage);
+            Assert.Contains("Reason", validationResults[0].MemberNames);
+        }
+
+        [Fact]
+        public void UpdateAppointment_ReasonEquals500Characters_ValidationPasses()
+        {
+            // Arrange
+            var validReason = new string('x', 500); // exactly 500 characters
+            var updateAppointment = new UpdateAppointment
+            {
+                Reason = validReason
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(updateAppointment);
+
+            // Assert
+            Assert.Empty(validationResults);
+        }
+
+        [Fact]
+        public void UpdateAppointment_ReasonIsNull_ValidationPasses()
+        {
+            // Arrange
+            var updateAppointment = new UpdateAppointment
+            {
+                Reason = null
+            };
+
+            // Act
+            var validationResults = ValidationTestHelper.ValidateObject(updateAppointment);
+
+            // Assert
+            Assert.Empty(validationResults);
         }
 
         public void Dispose()
