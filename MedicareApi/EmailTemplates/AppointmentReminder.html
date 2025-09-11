@@ -1,0 +1,28 @@
+<h1>تذكير بموعدك الطبي القادم</h1>
+<p>هذا تذكير ودود بأن لديك موعد طبي مجدول قريباً.</p>
+
+<div class="info-box">
+    <strong>تفاصيل الموعد:</strong><br>
+    📅 <strong>التاريخ:</strong> {{appointment_date}}<br>
+    🕐 <strong>الوقت:</strong> {{appointment_time}}<br>
+    👨‍⚕️ <strong>الطبيب:</strong> {{doctor_name}}<br>
+    📍 <strong>العنوان:</strong> {{doctor_address}}<br>
+    📞 <strong>هاتف العيادة:</strong> {{doctor_phone}}<br>
+    {{#appointment_reason}}
+    📝 <strong>سبب الزيارة:</strong> {{appointment_reason}}
+    {{/appointment_reason}}
+</div>
+
+<div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 12px; padding: 20px; margin: 20px 0; color: #856404;">
+    <strong style="color: #856404;">⏰ تذكيرات مهمة:</strong><br>
+    • احرص على الوصول قبل 15 دقيقة من الموعد<br>
+    • أحضر معك بطاقة الهوية وبطاقة التأمين<br>
+    • اصطحب التقارير الطبية السابقة إن وجدت<br>
+    • في حالة عدم تمكنك من الحضور، يرجى إلغاء الموعد مسبقاً
+</div>
+
+<div style="text-align: center; margin: 32px 0;">
+    <a href="{{manage_appointment_url}}" class="cta-button">إدارة الموعد</a>
+</div>
+
+<p>نتمنى لك زيارة مثمرة وشفاءً عاجلاً!</p>
