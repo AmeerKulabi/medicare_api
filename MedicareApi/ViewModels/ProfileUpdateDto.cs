@@ -63,5 +63,9 @@ namespace MedicareApi.ViewModels
 
         // صورة الملف الشخصي
         public string? ProfilePictureUrl { get; set; }
+
+        public string? Email { get; set; }
+
+        public string? ProfessionalBiography { get; set; }
     }
 }

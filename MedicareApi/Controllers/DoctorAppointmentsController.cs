@@ -133,7 +133,7 @@ namespace MedicareApi.Controllers
             _db.Appointments.Add(newAppointment);
             await _db.SaveChangesAsync();
             if (_emailService != null)
-                _emailService.SendAppointmentBooked(User.Identity.Name, newAppointment.ScheduledAt, doctor.Name, doctor.ClinicAddress, doctor.Phone);
+                _emailService.SendAppointmentBooked(User.Identity.Name, newAppointment.ScheduledAt, doctor.Name, doctor.ClinicAddress, "");
             return Ok(newAppointment);
         }
 
@@ -183,7 +183,7 @@ namespace MedicareApi.Controllers
             // Update more fields as needed
             await _db.SaveChangesAsync();
             if (_emailService != null)
-                _emailService.SendAppointmentChanged(User.Identity.Name, oldApt.ScheduledAt, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, doctor.Phone);
+                _emailService.SendAppointmentChanged(User.Identity.Name, oldApt.ScheduledAt, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, "");
             return Ok(appt);
         }
 
@@ -219,7 +219,7 @@ namespace MedicareApi.Controllers
             }
 
             if (_emailService != null)
-                _emailService.SendAppointmentDeleted(User.Identity.Name, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, doctor.Phone);
+                _emailService.SendAppointmentDeleted(User.Identity.Name, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, "");
             return NoContent();
         }
 

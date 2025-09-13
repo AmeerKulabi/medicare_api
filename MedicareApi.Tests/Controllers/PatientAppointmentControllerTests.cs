@@ -369,7 +369,7 @@ namespace MedicareApi.Tests.Controllers
             _context.Appointments.Add(appointmentWithNullReason);
             await _context.SaveChangesAsync();
 
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -401,7 +401,7 @@ namespace MedicareApi.Tests.Controllers
             _context.Appointments.Add(appointmentWithEmptyReason);
             await _context.SaveChangesAsync();
 
-            var controller = new PatientAppointmentController(_context);
+            var controller = new PatientAppointmentController(_context, null);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
