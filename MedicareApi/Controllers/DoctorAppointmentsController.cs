@@ -251,7 +251,7 @@ namespace MedicareApi.Controllers
 
 
         [HttpGet("doctor/{id}")]
-        public IActionResult GetBlockedAvailability(
+        public async Task<IActionResult> GetBlockedAvailability(
         [FromRoute] string id,
         [FromQuery] int week)
         {
@@ -260,42 +260,92 @@ namespace MedicareApi.Controllers
             var weekNum = GetCurrentWeekNumber() + week;
             var startOfWeek = FirstDateOfWeekISO8601(year, weekNum);
             var endOfWeek = startOfWeek.AddDays(7);
-            var blockedAppointments = _db.Appointments
+            
+            // Get regular appointments
+            var appointments = await _db.Appointments
                 .Where(a =>
                     a.DoctorId == id &&
                     a.ScheduledAt >= startOfWeek &&
                     a.ScheduledAt < endOfWeek)
-                .ToList();
-            var weekBookedSlots = new List<List<string>>();
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
+                .ToListAsync();
 
-            foreach( var b in blockedAppointments)
+            // Get blocked time slots for the week
+            var blockedTimeSlots = await _db.BlockedTimeSlots
+                .Where(b =>
+                    b.DoctorId == id &&
+                    b.StartTime < endOfWeek &&
+                    b.EndTime > startOfWeek)
+                .ToListAsync();
+
+            var weekBookedSlots = new List<List<string>>();
+            weekBookedSlots.Add(new List<string>()); // Sunday
+            weekBookedSlots.Add(new List<string>()); // Monday
+            weekBookedSlots.Add(new List<string>()); // Tuesday
+            weekBookedSlots.Add(new List<string>()); // Wednesday
+            weekBookedSlots.Add(new List<string>()); // Thursday
+            weekBookedSlots.Add(new List<string>()); // Friday
+            weekBookedSlots.Add(new List<string>()); // Saturday
+
+            // Add regular appointments to blocked slots
+            foreach( var appointment in appointments)
             {
-                if (b.ScheduledAt.DayOfWeek == DayOfWeek.Sunday)
-                    weekBookedSlots[0].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Monday)
-                    weekBookedSlots[1].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Tuesday)
-                    weekBookedSlots[2].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Wednesday)
-                    weekBookedSlots[3].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Thursday)
-                    weekBookedSlots[4].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Friday)
-                    weekBookedSlots[5].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Saturday)
-                    weekBookedSlots[6].Add(b.ScheduledAt.TimeOfDay.ToString());
+                var dayIndex = GetDayIndex(appointment.ScheduledAt.DayOfWeek);
+                weekBookedSlots[dayIndex].Add(appointment.ScheduledAt.TimeOfDay.ToString());
+            }
+
+            // Add blocked time slots
+            foreach (var blockedSlot in blockedTimeSlots)
+            {
+                var dayIndex = GetDayIndex(blockedSlot.StartTime.DayOfWeek);
+                
+                if (blockedSlot.IsWholeDay)
+                {
+                    // For whole day blocks, generate all possible appointment time slots for the day
+                    // Assuming appointments are available from 8:00 to 16:00 in 30-minute intervals
+                    var startHour = 8;
+                    var endHour = 16;
+                    
+                    for (int hour = startHour; hour < endHour; hour++)
+                    {
+                        for (int minute = 0; minute < 60; minute += 30)
+                        {
+                            var timeSlot = new TimeSpan(hour, minute, 0).ToString(@"hh\:mm\:ss");
+                            weekBookedSlots[dayIndex].Add(timeSlot);
+                        }
+                    }
+                }
                 else
-                    throw new Exception("Invalid date for an appointment");
+                {
+                    // For partial day blocks, add all 30-minute time slots within the blocked range
+                    var current = blockedSlot.StartTime;
+                    while (current < blockedSlot.EndTime && current < endOfWeek)
+                    {
+                        if (current >= startOfWeek)
+                        {
+                            var currentDayIndex = GetDayIndex(current.DayOfWeek);
+                            weekBookedSlots[currentDayIndex].Add(current.TimeOfDay.ToString());
+                        }
+                        current = current.AddMinutes(30); // Assuming 30-minute appointment slots
+                    }
+                }
             }
 
             return Ok(weekBookedSlots);
+        }
+
+        private static int GetDayIndex(DayOfWeek dayOfWeek)
+        {
+            return dayOfWeek switch
+            {
+                DayOfWeek.Sunday => 0,
+                DayOfWeek.Monday => 1,
+                DayOfWeek.Tuesday => 2,
+                DayOfWeek.Wednesday => 3,
+                DayOfWeek.Thursday => 4,
+                DayOfWeek.Friday => 5,
+                DayOfWeek.Saturday => 6,
+                _ => throw new ArgumentException("Invalid day of week")
+            };
         }
     }
 }
