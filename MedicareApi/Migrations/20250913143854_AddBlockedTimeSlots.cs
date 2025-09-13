@@ -11,17 +11,6 @@ namespace MedicareApi.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "ClinicAddress",
-                table: "Doctors",
-                type: "TEXT",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "Phone",
-                table: "Doctors",
-                type: "TEXT",
-                nullable: true);
 
             migrationBuilder.CreateTable(
                 name: "BlockedTimeSlots",
@@ -48,14 +37,6 @@ namespace MedicareApi.Migrations
         {
             migrationBuilder.DropTable(
                 name: "BlockedTimeSlots");
-
-            migrationBuilder.DropColumn(
-                name: "ClinicAddress",
-                table: "Doctors");
-
-            migrationBuilder.DropColumn(
-                name: "Phone",
-                table: "Doctors");
         }
     }
 }
