@@ -1,0 +1,84 @@
+@MedicareApi_HostAddress = http://localhost:5058
+@auth_token = your_jwt_token_here
+
+### Get all blocked time slots for authenticated doctor
+GET {{MedicareApi_HostAddress}}/api/blocked-time-slots
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Get blocked time slots for a specific doctor (for frontend/patients)
+GET {{MedicareApi_HostAddress}}/api/blocked-time-slots/doctor/test-doctor-id
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Create a new blocked time slot
+POST {{MedicareApi_HostAddress}}/api/blocked-time-slots
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "startTime": "2024-01-15T09:00:00Z",
+  "endTime": "2024-01-15T17:00:00Z",
+  "isWholeDay": true,
+  "reason": "Personal day off",
+  "isRecurring": false,
+  "recurrencePattern": null
+}
+
+###
+
+### Create a custom time range blocked slot
+POST {{MedicareApi_HostAddress}}/api/blocked-time-slots
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "startTime": "2024-01-16T14:00:00Z",
+  "endTime": "2024-01-16T16:00:00Z",
+  "isWholeDay": false,
+  "reason": "Medical conference",
+  "isRecurring": false,
+  "recurrencePattern": null
+}
+
+###
+
+### Update a blocked time slot
+PUT {{MedicareApi_HostAddress}}/api/blocked-time-slots/blocked-slot-id
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "reason": "Updated reason for blocking"
+}
+
+###
+
+### Delete a blocked time slot
+DELETE {{MedicareApi_HostAddress}}/api/blocked-time-slots/blocked-slot-id
+Authorization: Bearer {{auth_token}}
+
+###
+
+### Test appointment booking with blocked time (should fail)
+POST {{MedicareApi_HostAddress}}/api/appointments
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "patientId": "patient-user-id",
+  "doctorId": "doctor-id",
+  "scheduledAt": "2024-01-15T10:00:00Z",
+  "status": "Booked",
+  "reason": "Routine checkup"
+}
+
+###
