@@ -41,15 +41,13 @@ namespace MedicareApi.Controllers
 
             var response = blockedSlots.Select(b => new BlockedTimeSlotResponse
             {
-                Id = b.Id,
-                DoctorId = b.DoctorId,
-                StartTime = b.StartTime,
-                EndTime = b.EndTime,
-                IsWholeDay = b.IsWholeDay,
-                Reason = b.Reason,
-                CreatedAt = b.CreatedAt,
-                IsRecurring = b.IsRecurring,
-                RecurrencePattern = b.RecurrencePattern
+                id = b.Id,
+                doctorId = b.DoctorId,
+                date = b.StartTime.ToString("yyyy-MM-dd"),
+                startTime = b.IsWholeDay ? null : b.StartTime.ToString("HH:mm"),
+                endTime = b.IsWholeDay ? null : b.EndTime.ToString("HH:mm"),
+                blockWholeDay = b.IsWholeDay,
+                reason = b.Reason
             }).ToList();
 
             return Ok(response);
@@ -69,15 +67,13 @@ namespace MedicareApi.Controllers
                 .OrderBy(b => b.StartTime)
                 .Select(b => new BlockedTimeSlotResponse
                 {
-                    Id = b.Id,
-                    DoctorId = b.DoctorId,
-                    StartTime = b.StartTime,
-                    EndTime = b.EndTime,
-                    IsWholeDay = b.IsWholeDay,
-                    Reason = null, // Don't expose reason to patients for privacy
-                    CreatedAt = b.CreatedAt,
-                    IsRecurring = b.IsRecurring,
-                    RecurrencePattern = b.RecurrencePattern
+                    id = b.Id,
+                    doctorId = b.DoctorId,
+                    date = b.StartTime.ToString("yyyy-MM-dd"),
+                    startTime = b.IsWholeDay ? null : b.StartTime.ToString("HH:mm"),
+                    endTime = b.IsWholeDay ? null : b.EndTime.ToString("HH:mm"),
+                    blockWholeDay = b.IsWholeDay,
+                    reason = null // Don't expose reason to patients for privacy
                 })
                 .ToListAsync();
 
@@ -104,8 +100,40 @@ namespace MedicareApi.Controllers
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
             if (doctor == null) return Unauthorized();
 
+            // Parse date
+            if (!DateTime.TryParse(request.Date, out var date))
+            {
+                return BadRequest("Invalid date format");
+            }
+
+            DateTime startTime, endTime;
+
+            if (request.IsWholeDay)
+            {
+                // For whole day, set to start and end of the day
+                startTime = date.Date;
+                endTime = date.Date.AddDays(1).AddTicks(-1); // End of day
+            }
+            else
+            {
+                // Parse start and end times
+                if (string.IsNullOrEmpty(request.StartTime) || string.IsNullOrEmpty(request.EndTime))
+                {
+                    return BadRequest("StartTime and EndTime are required when IsWholeDay is false");
+                }
+
+                if (!TimeSpan.TryParse(request.StartTime, out var startTimeSpan) || 
+                    !TimeSpan.TryParse(request.EndTime, out var endTimeSpan))
+                {
+                    return BadRequest("Invalid time format. Use HH:mm format");
+                }
+
+                startTime = date.Date.Add(startTimeSpan);
+                endTime = date.Date.Add(endTimeSpan);
+            }
+
             // Validate time range
-            if (request.StartTime >= request.EndTime)
+            if (startTime >= endTime)
             {
                 return BadRequest("End time must be after start time");
             }
@@ -113,8 +141,8 @@ namespace MedicareApi.Controllers
             // Check for existing appointments in this time range
             var conflictingAppointments = await _db.Appointments
                 .Where(a => a.DoctorId == doctor.Id &&
-                           a.ScheduledAt >= request.StartTime &&
-                           a.ScheduledAt < request.EndTime)
+                           a.ScheduledAt >= startTime &&
+                           a.ScheduledAt < endTime)
                 .ToListAsync();
 
             if (conflictingAppointments.Any())
@@ -125,9 +153,9 @@ namespace MedicareApi.Controllers
             // Check for overlapping blocked time slots
             var overlappingBlocks = await _db.BlockedTimeSlots
                 .Where(b => b.DoctorId == doctor.Id &&
-                           ((b.StartTime <= request.StartTime && b.EndTime > request.StartTime) ||
-                            (b.StartTime < request.EndTime && b.EndTime >= request.EndTime) ||
-                            (b.StartTime >= request.StartTime && b.EndTime <= request.EndTime)))
+                           ((b.StartTime <= startTime && b.EndTime > startTime) ||
+                            (b.StartTime < endTime && b.EndTime >= endTime) ||
+                            (b.StartTime >= startTime && b.EndTime <= endTime)))
                 .ToListAsync();
 
             if (overlappingBlocks.Any())
@@ -138,12 +166,12 @@ namespace MedicareApi.Controllers
             var blockedTimeSlot = new BlockedTimeSlot
             {
                 DoctorId = doctor.Id,
-                StartTime = request.StartTime,
-                EndTime = request.EndTime,
+                StartTime = startTime,
+                EndTime = endTime,
                 IsWholeDay = request.IsWholeDay,
                 Reason = request.Reason,
-                IsRecurring = request.IsRecurring,
-                RecurrencePattern = request.RecurrencePattern
+                IsRecurring = false, // Frontend doesn't support this yet
+                RecurrencePattern = null
             };
 
             _db.BlockedTimeSlots.Add(blockedTimeSlot);
@@ -151,15 +179,13 @@ namespace MedicareApi.Controllers
 
             var response = new BlockedTimeSlotResponse
             {
-                Id = blockedTimeSlot.Id,
-                DoctorId = blockedTimeSlot.DoctorId,
-                StartTime = blockedTimeSlot.StartTime,
-                EndTime = blockedTimeSlot.EndTime,
-                IsWholeDay = blockedTimeSlot.IsWholeDay,
-                Reason = blockedTimeSlot.Reason,
-                CreatedAt = blockedTimeSlot.CreatedAt,
-                IsRecurring = blockedTimeSlot.IsRecurring,
-                RecurrencePattern = blockedTimeSlot.RecurrencePattern
+                id = blockedTimeSlot.Id,
+                doctorId = blockedTimeSlot.DoctorId,
+                date = blockedTimeSlot.StartTime.ToString("yyyy-MM-dd"),
+                startTime = blockedTimeSlot.IsWholeDay ? null : blockedTimeSlot.StartTime.ToString("HH:mm"),
+                endTime = blockedTimeSlot.IsWholeDay ? null : blockedTimeSlot.EndTime.ToString("HH:mm"),
+                blockWholeDay = blockedTimeSlot.IsWholeDay,
+                reason = blockedTimeSlot.Reason
             };
 
             return Ok(response);
@@ -189,23 +215,62 @@ namespace MedicareApi.Controllers
             if (blockedSlot == null) return NotFound();
 
             // Update fields if provided
-            if (request.StartTime.HasValue)
-                blockedSlot.StartTime = request.StartTime.Value;
+            if (!string.IsNullOrEmpty(request.Date))
+            {
+                if (!DateTime.TryParse(request.Date, out var date))
+                {
+                    return BadRequest("Invalid date format");
+                }
+
+                if (request.IsWholeDay == true)
+                {
+                    // For whole day, set to start and end of the day
+                    blockedSlot.StartTime = date.Date;
+                    blockedSlot.EndTime = date.Date.AddDays(1).AddTicks(-1);
+                }
+                else
+                {
+                    // Update date part while keeping time part
+                    var currentStartTime = blockedSlot.StartTime.TimeOfDay;
+                    var currentEndTime = blockedSlot.EndTime.TimeOfDay;
+                    blockedSlot.StartTime = date.Date.Add(currentStartTime);
+                    blockedSlot.EndTime = date.Date.Add(currentEndTime);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(request.StartTime) && request.IsWholeDay != true)
+            {
+                if (!TimeSpan.TryParse(request.StartTime, out var startTimeSpan))
+                {
+                    return BadRequest("Invalid start time format. Use HH:mm format");
+                }
+                blockedSlot.StartTime = blockedSlot.StartTime.Date.Add(startTimeSpan);
+            }
             
-            if (request.EndTime.HasValue)
-                blockedSlot.EndTime = request.EndTime.Value;
+            if (!string.IsNullOrEmpty(request.EndTime) && request.IsWholeDay != true)
+            {
+                if (!TimeSpan.TryParse(request.EndTime, out var endTimeSpan))
+                {
+                    return BadRequest("Invalid end time format. Use HH:mm format");
+                }
+                blockedSlot.EndTime = blockedSlot.EndTime.Date.Add(endTimeSpan);
+            }
 
             if (request.IsWholeDay.HasValue)
+            {
                 blockedSlot.IsWholeDay = request.IsWholeDay.Value;
+                
+                if (request.IsWholeDay.Value)
+                {
+                    // Convert to whole day
+                    var date = blockedSlot.StartTime.Date;
+                    blockedSlot.StartTime = date;
+                    blockedSlot.EndTime = date.AddDays(1).AddTicks(-1);
+                }
+            }
 
             if (request.Reason != null)
                 blockedSlot.Reason = request.Reason;
-
-            if (request.IsRecurring.HasValue)
-                blockedSlot.IsRecurring = request.IsRecurring.Value;
-
-            if (request.RecurrencePattern != null)
-                blockedSlot.RecurrencePattern = request.RecurrencePattern;
 
             // Validate updated time range
             if (blockedSlot.StartTime >= blockedSlot.EndTime)
@@ -217,15 +282,13 @@ namespace MedicareApi.Controllers
 
             var response = new BlockedTimeSlotResponse
             {
-                Id = blockedSlot.Id,
-                DoctorId = blockedSlot.DoctorId,
-                StartTime = blockedSlot.StartTime,
-                EndTime = blockedSlot.EndTime,
-                IsWholeDay = blockedSlot.IsWholeDay,
-                Reason = blockedSlot.Reason,
-                CreatedAt = blockedSlot.CreatedAt,
-                IsRecurring = blockedSlot.IsRecurring,
-                RecurrencePattern = blockedSlot.RecurrencePattern
+                id = blockedSlot.Id,
+                doctorId = blockedSlot.DoctorId,
+                date = blockedSlot.StartTime.ToString("yyyy-MM-dd"),
+                startTime = blockedSlot.IsWholeDay ? null : blockedSlot.StartTime.ToString("HH:mm"),
+                endTime = blockedSlot.IsWholeDay ? null : blockedSlot.EndTime.ToString("HH:mm"),
+                blockWholeDay = blockedSlot.IsWholeDay,
+                reason = blockedSlot.Reason
             };
 
             return Ok(response);
