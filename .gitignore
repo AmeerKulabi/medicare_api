@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# Build results
-=======
 # Build Outputs
 bin/
 obj/
@@ -21,7 +18,6 @@ out/
 TestResults/
 
 # Build Results
->>>>>>> main
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -34,7 +30,6 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
-<<<<<<< HEAD
 [Ll]ogs/
 
 # Visual Studio files
@@ -60,8 +55,6 @@ appsettings.local.json
 packages/
 
 # MSBuild
-[Mm]igrations/
-=======
 
 # .NET Core
 project.lock.json
@@ -77,4 +70,3 @@ artifacts/
 *.db
 *.db-shm
 *.db-wal
->>>>>>> main
