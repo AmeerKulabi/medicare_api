@@ -93,7 +93,7 @@ namespace MedicareApi.Tests.Controllers
             var okResult = Assert.IsType<OkObjectResult>(result);
             var blockedSlots = Assert.IsAssignableFrom<List<BlockedTimeSlotResponse>>(okResult.Value);
             Assert.Single(blockedSlots);
-            Assert.Equal("Personal time", blockedSlots[0].Reason);
+            Assert.Equal("Personal time", blockedSlots[0].reason);
         }
 
         [Fact]
@@ -101,10 +101,12 @@ namespace MedicareApi.Tests.Controllers
         {
             // Arrange
             var controller = CreateController();
+            var tomorrow = DateTime.UtcNow.AddDays(2);
             var request = new CreateBlockedTimeSlotRequest
             {
-                StartTime = DateTime.UtcNow.AddDays(2),
-                EndTime = DateTime.UtcNow.AddDays(2).AddHours(3),
+                Date = tomorrow.ToString("yyyy-MM-dd"),
+                StartTime = "09:00",
+                EndTime = "12:00",
                 IsWholeDay = false,
                 Reason = "Medical conference"
             };
@@ -115,8 +117,8 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<BlockedTimeSlotResponse>(okResult.Value);
-            Assert.Equal("Medical conference", response.Reason);
-            Assert.Equal("test-doctor-id", response.DoctorId);
+            Assert.Equal("Medical conference", response.reason);
+            Assert.Equal("test-doctor-id", response.doctorId);
         }
 
         [Fact]
@@ -124,10 +126,12 @@ namespace MedicareApi.Tests.Controllers
         {
             // Arrange
             var controller = CreateController();
+            var tomorrow = DateTime.UtcNow.AddDays(2);
             var request = new CreateBlockedTimeSlotRequest
             {
-                StartTime = DateTime.UtcNow.AddDays(2),
-                EndTime = DateTime.UtcNow.AddDays(1), // End before start
+                Date = tomorrow.ToString("yyyy-MM-dd"),
+                StartTime = "15:00",
+                EndTime = "09:00", // End before start
                 IsWholeDay = false,
                 Reason = "Invalid range"
             };
@@ -161,8 +165,9 @@ namespace MedicareApi.Tests.Controllers
 
             var request = new CreateBlockedTimeSlotRequest
             {
-                StartTime = startTime,
-                EndTime = endTime,
+                Date = startTime.ToString("yyyy-MM-dd"),
+                StartTime = startTime.ToString("HH:mm"),
+                EndTime = endTime.ToString("HH:mm"),
                 IsWholeDay = false,
                 Reason = "Should fail"
             };
@@ -198,7 +203,7 @@ namespace MedicareApi.Tests.Controllers
             var okResult = Assert.IsType<OkObjectResult>(result);
             var blockedSlots = Assert.IsAssignableFrom<List<BlockedTimeSlotResponse>>(okResult.Value);
             Assert.Single(blockedSlots);
-            Assert.Null(blockedSlots[0].Reason); // Reason should be hidden for privacy
+            Assert.Null(blockedSlots[0].reason); // Reason should be hidden for privacy
         }
 
         [Fact]
@@ -228,7 +233,7 @@ namespace MedicareApi.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<BlockedTimeSlotResponse>(okResult.Value);
-            Assert.Equal("Updated reason", response.Reason);
+            Assert.Equal("Updated reason", response.reason);
         }
 
         [Fact]

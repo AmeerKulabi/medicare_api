@@ -5,43 +5,37 @@ namespace MedicareApi.ViewModels
     public class CreateBlockedTimeSlotRequest
     {
         [Required]
-        public DateTime StartTime { get; set; }
+        public string Date { get; set; } = string.Empty;
+        
+        public string? StartTime { get; set; }
+        public string? EndTime { get; set; }
         
         [Required]
-        public DateTime EndTime { get; set; }
-        
         public bool IsWholeDay { get; set; }
         
         [StringLength(500, ErrorMessage = "Reason must not exceed 500 characters")]
         public string? Reason { get; set; }
-        
-        public bool IsRecurring { get; set; } = false;
-        public string? RecurrencePattern { get; set; }
     }
 
     public class UpdateBlockedTimeSlotRequest
     {
-        public DateTime? StartTime { get; set; }
-        public DateTime? EndTime { get; set; }
+        public string? Date { get; set; }
+        public string? StartTime { get; set; }
+        public string? EndTime { get; set; }
         public bool? IsWholeDay { get; set; }
         
         [StringLength(500, ErrorMessage = "Reason must not exceed 500 characters")]
         public string? Reason { get; set; }
-        
-        public bool? IsRecurring { get; set; }
-        public string? RecurrencePattern { get; set; }
     }
 
     public class BlockedTimeSlotResponse
     {
-        public string Id { get; set; } = string.Empty;
-        public string DoctorId { get; set; } = string.Empty;
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
-        public bool IsWholeDay { get; set; }
-        public string? Reason { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public bool IsRecurring { get; set; }
-        public string? RecurrencePattern { get; set; }
+        public string id { get; set; } = string.Empty;
+        public string doctorId { get; set; } = string.Empty;
+        public string date { get; set; } = string.Empty;
+        public string? startTime { get; set; }
+        public string? endTime { get; set; }
+        public bool blockWholeDay { get; set; }
+        public string? reason { get; set; }
     }
 }
