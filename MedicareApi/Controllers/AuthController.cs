@@ -127,8 +127,8 @@ namespace MedicareApi.Controllers
             );
             
             // Generate email confirmation token
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var encodedToken = HttpUtility.UrlEncode(token);
+            var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = HttpUtility.UrlEncode(emailToken);
             var confirmationLink = Url.Action(
                 "ConfirmEmail", "Auth",
                 new { userId = user.Id, token = encodedToken },

@@ -42,7 +42,7 @@ namespace MedicareApi.Controllers
             _db.Appointments.Remove(appt);
             await _db.SaveChangesAsync();
             if(_emailService != null )
-                _emailService.SendAppointmentDeleted(User.Identity.Name, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, doctor.Phone);
+                _emailService.SendAppointmentDeleted(User.Identity.Name, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, "");
             return NoContent();
         }
 

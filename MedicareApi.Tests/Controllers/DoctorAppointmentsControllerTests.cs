@@ -428,7 +428,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_WithoutReason_CreatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
             SetupControllerContext(controller, "patient-user-id", false);
             
             var appointment = new Appointment
@@ -460,7 +460,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_WithEmptyReason_CreatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
             SetupControllerContext(controller, "patient-user-id", false);
             
             var appointment = new Appointment
@@ -492,7 +492,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_WithoutReason_UpdatesOtherFieldsSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
             SetupControllerContext(controller, "doctor-user-id", true);
             var newScheduledTime = DateTime.Now.AddDays(5);
             var update = new UpdateAppointment
@@ -522,7 +522,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_WithEmptyReason_UpdatesReasonToEmpty()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
             SetupControllerContext(controller, "doctor-user-id", true);
             var update = new UpdateAppointment
             {
@@ -584,7 +584,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_WithReasonExceeding500Characters_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Create a reason that is longer than 500 characters
@@ -613,7 +613,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_WithReasonUnder500Characters_ReturnsOk()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Create a reason that is exactly 500 characters
@@ -639,7 +639,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_WithReasonExceeding500Characters_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Create a reason that is longer than 500 characters
@@ -664,7 +664,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_WithReasonUnder500Characters_ReturnsOk()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Create a reason that is exactly 500 characters
