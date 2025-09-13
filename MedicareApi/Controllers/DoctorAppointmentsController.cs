@@ -101,6 +101,27 @@ namespace MedicareApi.Controllers
                 doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.Id == appointment.DoctorId);
             }
 
+            // Check for existing appointments at the same time
+            var existingAppointment = await _db.Appointments
+                .FirstOrDefaultAsync(a => a.DoctorId == appointment.DoctorId && 
+                                        a.ScheduledAt == appointment.ScheduledAt);
+            
+            if (existingAppointment != null)
+            {
+                return BadRequest("This time slot is already booked");
+            }
+
+            // Check for blocked time slots
+            var blockedTimeConflict = await _db.BlockedTimeSlots
+                .AnyAsync(b => b.DoctorId == appointment.DoctorId &&
+                             b.StartTime <= appointment.ScheduledAt &&
+                             b.EndTime > appointment.ScheduledAt);
+
+            if (blockedTimeConflict)
+            {
+                return BadRequest("This time slot is blocked and not available for booking");
+            }
+
             Appointment newAppointment = new Appointment()
             {
                 PatientId = appointment.PatientId,

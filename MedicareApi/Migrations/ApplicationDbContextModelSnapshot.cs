@@ -105,6 +105,7 @@ namespace MedicareApi.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Reason")
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("ScheduledAt")
@@ -148,12 +149,51 @@ namespace MedicareApi.Migrations
                     b.ToTable("AvailabilitySlots");
                 });
 
+            modelBuilder.Entity("MedicareApi.Models.BlockedTimeSlot", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DoctorId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsRecurring")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsWholeDay")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RecurrencePattern")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BlockedTimeSlots");
+                });
+
             modelBuilder.Entity("MedicareApi.Models.Doctor", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Availability")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ClinicAddress")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ClinicName")
@@ -198,6 +238,9 @@ namespace MedicareApi.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PracticeType")
