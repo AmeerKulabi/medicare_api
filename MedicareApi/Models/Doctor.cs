@@ -35,6 +35,7 @@
         public string? ClinicName { get; set; }
         public string? ClinicAddress { get; set; }
         public string? PracticeType { get; set; }
+        public string? Phone { get; set; }
 
         // Services & Availability
         public List<string>? ServicesOffered { get; set; }
