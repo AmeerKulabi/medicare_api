@@ -48,6 +48,11 @@ namespace MedicareApi.Controllers
         private readonly IEmailService _emailService;
 
         /// <summary>
+        /// Web host environment.
+        /// </summary>
+        private readonly IWebHostEnvironment _webHostEnvironment;
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="userManager">Identity framework, user manager.</param>
@@ -55,14 +60,16 @@ namespace MedicareApi.Controllers
         /// <param name="configuration">Configuration mananger.</param>
         /// <param name="db">Access db.</param>
         /// <param name="emailService">Email service.</param>
+        /// <param name="webHostEnvironment">Web host environment.</param>
         public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration,
-            ApplicationDbContext db, IEmailService emailService)
+            ApplicationDbContext db, IEmailService emailService, IWebHostEnvironment webHostEnvironment)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _db = db;
             _emailService = emailService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         /// <summary>
@@ -243,7 +250,9 @@ namespace MedicareApi.Controllers
                 return BadRequest(new { message = "Invalid or expired token" });
             }
 
-            return Ok(new { message = "Email confirmed successfully. You can now log in." });
+            // Return HTML page for successful confirmation
+            var htmlContent = await GetEmailConfirmationHtmlAsync();
+            return Content(htmlContent, "text/html; charset=utf-8");
         }
 
         /// <summary>
@@ -273,7 +282,9 @@ namespace MedicareApi.Controllers
                 return BadRequest(new { message = "Invalid or expired token" });
             }
 
-            return Ok(new { message = "Email confirmed successfully. You can now log in." });
+            // Return HTML page for successful confirmation
+            var htmlContent = await GetEmailConfirmationHtmlAsync();
+            return Content(htmlContent, "text/html; charset=utf-8");
         }
 
         /// <summary>
@@ -409,6 +420,50 @@ namespace MedicareApi.Controllers
             }
 
             return Ok(new { message = "Password changed successfully." });
+        }
+
+        /// <summary>
+        /// Gets the email confirmation success HTML page content.
+        /// </summary>
+        /// <returns>HTML content as string</returns>
+        private async Task<string> GetEmailConfirmationHtmlAsync()
+        {
+            try
+            {
+                var htmlPath = Path.Combine(_webHostEnvironment.WebRootPath, "email-confirmed.html");
+                if (System.IO.File.Exists(htmlPath))
+                {
+                    return await System.IO.File.ReadAllTextAsync(htmlPath);
+                }
+            }
+            catch (Exception)
+            {
+                // If reading file fails, return a simple HTML fallback
+            }
+
+            // Fallback HTML in case file is not found
+            return @"
+<!DOCTYPE html>
+<html lang=""ar"" dir=""rtl"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>تأكيد البريد الإلكتروني</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; direction: rtl; }
+        .container { max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 40px; border-radius: 10px; }
+        .success { color: #4CAF50; font-size: 24px; margin-bottom: 20px; }
+        .btn { background: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class=""container"">
+        <div class=""success"">✓ تم تأكيد البريد الإلكتروني بنجاح!</div>
+        <p>مرحباً بك في Medicare API. لقد تم تأكيد بريدك الإلكتروني بنجاح.</p>
+        <a href=""http://localhost:8080/"" class=""btn"">العودة إلى الصفحة الرئيسية</a>
+    </div>
+</body>
+</html>";
         }
     }
 }

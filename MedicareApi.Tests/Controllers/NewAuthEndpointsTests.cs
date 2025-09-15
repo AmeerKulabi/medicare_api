@@ -1,6 +1,7 @@
 using MedicareApi.Controllers;
 using MedicareApi.Services;
 using MedicareApi.ViewModels;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -156,8 +157,9 @@ namespace MedicareApi.Tests.Controllers
         {
             var signInManager = new Mock<SignInManager<ApplicationUser>>(
                 userManager, Mock.Of<IHttpContextAccessor>(), Mock.Of<IUserClaimsPrincipalFactory<ApplicationUser>>(), null, null, null, null);
+            var webHostEnvironment = new Mock<IWebHostEnvironment>();
 
-            var controller = new AuthController(userManager, signInManager.Object, _configurationMock.Object, _context, emailService);
+            var controller = new AuthController(userManager, signInManager.Object, _configurationMock.Object, _context, emailService, webHostEnvironment.Object);
 
             // Setup HTTP context for URL generation
             var httpContext = new Mock<HttpContext>();
