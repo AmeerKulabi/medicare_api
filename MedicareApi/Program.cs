@@ -97,7 +97,8 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
-// Register email service
+// Register email services
+builder.Services.AddScoped<MedicareApi.Services.IEmailTemplateService, MedicareApi.Services.EmailTemplateService>();
 builder.Services.AddScoped<MedicareApi.Services.IEmailService, MedicareApi.Services.SmtpEmailService>();
 
 builder.Services.AddControllers();
