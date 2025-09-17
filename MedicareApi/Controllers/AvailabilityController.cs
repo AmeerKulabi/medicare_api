@@ -1,4 +1,5 @@
-﻿using MedicareApi.Data;
+﻿using Humanizer;
+using MedicareApi.Data;
 using MedicareApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -94,6 +95,10 @@ namespace MedicareApi.Controllers
 
             var slot = await _db.AvailabilitySlots.FirstOrDefaultAsync(s => s.Id == id && s.DoctorId == doctor.Id);
             if (slot == null) return NotFound();
+
+            // Convert to TimeSpan
+            if (TimeSpan.Parse(update.Start) > TimeSpan.Parse(update.End))
+                return BadRequest("وقت البداية يجب يكون قبل وقت النهاية");
 
             slot.Start = update.Start;
             slot.End = update.End;
