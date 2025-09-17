@@ -9,11 +9,13 @@ namespace MedicareApi.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<SmtpEmailService> _logger;
+        private readonly IEmailTemplateService _templateService;
 
-        public SmtpEmailService(IConfiguration configuration, ILogger<SmtpEmailService> logger)
+        public SmtpEmailService(IConfiguration configuration, ILogger<SmtpEmailService> logger, IEmailTemplateService templateService)
         {
             _configuration = configuration;
             _logger = logger;
+            _templateService = templateService;
         }
 
         public async Task SendAppointmentBooked(string email, DateTime aptTime, string doctorName, string doctorAddress, string DoctorPhoneNumber)
@@ -42,9 +44,9 @@ namespace MedicareApi.Services
                                     <!-- Header / Brand -->
                                     <tr>
                                         <td align=""center"" style=""background: #eafaf0; padding: 24px 0;"">
-                                            <span style=""display:inline-block;background:#35ba7c;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
+                                            <span style=""display:inline-block;background:#2EC492;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
                                                 <svg width=""28"" height=""28"" fill=""none"" viewBox=""0 0 24 24"">
-                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#35ba7c""/>
+                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#2EC492""/>
                                                     <path d=""M8.5 12.5l2.5 2.5 4.5-4.5"" stroke=""#fff"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""/>
                                                 </svg>
                                             </span>
@@ -140,9 +142,9 @@ namespace MedicareApi.Services
                                 <table width=""520"" cellpadding=""0"" cellspacing=""0"" style=""background: #fff; border-radius: 18px; box-shadow: 0 2px 8px #e0e4e9; overflow: hidden;"">
                                     <tr>
                                         <td align=""center"" style=""background: #eafaf0; padding: 24px 0;"">
-                                            <span style=""display:inline-block;background:#35ba7c;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
+                                            <span style=""display:inline-block;background:#2EC492;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
                                                 <svg width=""28"" height=""28"" fill=""none"" viewBox=""0 0 24 24"">
-                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#35ba7c""/>
+                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#2EC492""/>
                                                     <path d=""M8.5 12.5l2.5 2.5 4.5-4.5"" stroke=""#fff"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""/>
                                                 </svg>
                                             </span>
@@ -239,9 +241,9 @@ namespace MedicareApi.Services
                                 <table width=""420"" cellpadding=""0"" cellspacing=""0"" style=""background: #fff; border-radius: 18px; box-shadow: 0 2px 8px #e0e4e9; overflow: hidden;"">
                                     <tr>
                                         <td align=""center"" style=""background: #eafaf0; padding: 24px 0;"">
-                                            <span style=""display:inline-block;background:#35ba7c;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
+                                            <span style=""display:inline-block;background:#2EC492;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
                                                 <svg width=""28"" height=""28"" fill=""none"" viewBox=""0 0 24 24"">
-                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#35ba7c""/>
+                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#2EC492""/>
                                                     <path d=""M8.5 12.5l2.5 2.5 4.5-4.5"" stroke=""#fff"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""/>
                                                 </svg>
                                             </span>
@@ -305,39 +307,96 @@ namespace MedicareApi.Services
 
         public async Task SendEmailConfirmationAsync(string email, string confirmationLink)
         {
-            var subject = "Confirm your Medicare API account";
-            var body = $@"
-                <html>
-                <body>
-                    <h2>Welcome to Medicare API</h2>
-                    <p>Please confirm your email address by clicking the link below:</p>
-                    <p><a href='{confirmationLink}'>Confirm Email Address</a></p>
-                    <p>If you didn't create this account, you can safely ignore this email.</p>
-                    <br>
-                    <p>Best regards,<br>Medicare API Team</p>
-                </body>
-                </html>";
-            
-            await SendEmailAsync(email, subject, body);
+            try
+            {
+                var variables = new Dictionary<string, string>
+                {
+                    ["confirmation_link"] = confirmationLink
+                };
+
+                var body = await _templateService.RenderTemplateAsync("EmailConfirmation", variables);
+                var subject = "تأكيد حسابك في منصة صحتك";
+
+                await SendEmailAsync(email, subject, body);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send email confirmation to {Email}", email);
+                throw;
+            }
         }
 
         public async Task SendPasswordResetAsync(string email, string resetLink)
         {
-            var subject = "Reset your Medicare API password";
-            var body = $@"
-                <html>
-                <body>
-                    <h2>Password Reset Request</h2>
-                    <p>You requested to reset your password. Click the link below to set a new password:</p>
-                    <p><a href='{resetLink}'>Reset Password</a></p>
-                    <p>This link will expire in 24 hours.</p>
-                    <p>If you didn't request this password reset, you can safely ignore this email.</p>
-                    <br>
-                    <p>Best regards,<br>Medicare API Team</p>
-                </body>
-                </html>";
-            
-            await SendEmailAsync(email, subject, body);
+            try
+            {
+                var variables = new Dictionary<string, string>
+                {
+                    ["reset_link"] = resetLink
+                };
+
+                var body = await _templateService.RenderTemplateAsync("PasswordReset", variables);
+                var subject = "إعادة تعيين كلمة المرور - منصة صحتك";
+
+                await SendEmailAsync(email, subject, body);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send password reset email to {Email}", email);
+                throw;
+            }
+        }
+
+        public async Task SendWelcomeAsync(string email, string websiteUrl)
+        {
+            try
+            {
+                var variables = new Dictionary<string, string>
+                {
+                    ["website_url"] = websiteUrl
+                };
+
+                var body = await _templateService.RenderTemplateAsync("Welcome", variables);
+                var subject = "أهلاً وسهلاً بك في منصة صحتك";
+
+                await SendEmailAsync(email, subject, body);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send welcome email to {Email}", email);
+                throw;
+            }
+        }
+
+        public async Task SendAppointmentReminderAsync(string email, DateTime aptTime, string doctorName, string doctorAddress, string doctorPhone, string? reason = null)
+        {
+            try
+            {
+                var culture = System.Globalization.CultureInfo.GetCultureInfo("ar-IQ");
+                var dateStr = aptTime.ToLocalTime().ToString("dd MMMM yyyy", culture);
+                var timeStr = aptTime.ToLocalTime().ToString("hh:mm tt", new System.Globalization.CultureInfo("ar-IQ")) ?? "غير متوفر";
+
+                var variables = new Dictionary<string, string>
+                {
+                    ["appointment_date"] = dateStr,
+                    ["appointment_time"] = timeStr,
+                    ["doctor_name"] = doctorName ?? "غير متوفر",
+                    ["doctor_address"] = doctorAddress ?? "غير متوفر",
+                    ["doctor_phone"] = doctorPhone ?? "غير متوفر",
+                    ["appointment_reason"] = reason ?? string.Empty,
+                    ["manage_appointment_url"] = _configuration["Website:BaseUrl"] + "/appointments" ?? "#"
+                };
+
+                var body = await _templateService.RenderTemplateAsync("AppointmentReminder", variables);
+                var subject = "تذكير بموعدك الطبي القادم - صحتك";
+
+                await SendEmailAsync(email, subject, body);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send appointment reminder email to {Email}", email);
+                throw;
+            }
         }
 
         public async Task<bool> SendEmailAsync(string to, string subject, string body)
