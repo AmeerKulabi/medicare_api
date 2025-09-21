@@ -95,9 +95,16 @@ namespace MedicareApi.Controllers
             List<DoctorListingItem> doctorListingItems = new List<DoctorListingItem>();
             foreach(var doctor in doctors)
             {
-                if(doctor.IsActive && doctor.RegistrationCompleted)
+                // Get the associated user to check email confirmation
+                var user = await _userManager.FindByIdAsync(doctor.UserId);
+                if (user != null && 
+                    doctor.IsActive && 
+                    doctor.RegistrationCompleted && 
+                    doctor.IsProfileCompleted && 
+                    doctor.IsVerified && 
+                    await _userManager.IsEmailConfirmedAsync(user))
                 {
-                    doctorListingItems.Add(DoctorHelper.FromDoctorToDoctorListingItem(doctor, await _userManager.FindByIdAsync(doctor.UserId)));
+                    doctorListingItems.Add(DoctorHelper.FromDoctorToDoctorListingItem(doctor, user));
                 }
             }
 

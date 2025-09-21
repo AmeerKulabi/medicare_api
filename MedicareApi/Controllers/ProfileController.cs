@@ -84,6 +84,7 @@ namespace MedicareApi.Controllers
             }
 
             if (!doctor.RegistrationCompleted) doctor.RegistrationCompleted = true;
+            if (!doctor.IsProfileCompleted) doctor.IsProfileCompleted = true;
 
             #if DEBUG
                 if (!doctor.IsActive) doctor.IsActive = true;

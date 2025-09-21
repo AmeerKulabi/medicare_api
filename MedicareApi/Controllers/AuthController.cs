@@ -107,32 +107,13 @@ namespace MedicareApi.Controllers
                     Email = model.Email,
                     Name = model.FullName,
                     IsActive = false,
-                    RegistrationCompleted = false
+                    RegistrationCompleted = false,
+                    IsProfileCompleted = false,
+                    IsVerified = false
                 };
                 _db.Doctors.Add(newDoctor);
                 await _db.SaveChangesAsync();
             }
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Email),
-                new Claim("uid", user.Id),
-                new Claim("isDoctor", user.IsDoctor.ToString())
-            };
-            
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] 
-                ?? throw new InvalidOperationException("JWT key not configured")));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var minutesStr = _configuration["Jwt:AccessTokenExpirationMinutes"];
-            var minutes = int.TryParse(minutesStr, out var m) ? m : 10;
-            var token = new JwtSecurityToken(
-            issuer: _configuration["Jwt:Issuer"] ?? "medicare.app",
-            audience: null,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(minutes),
-            signingCredentials: creds
-            );
-            
             // Generate email confirmation token
             var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedToken = HttpUtility.UrlEncode(emailToken);
@@ -144,9 +125,14 @@ namespace MedicareApi.Controllers
             // Send confirmation email
             await _emailService.SendEmailConfirmationAsync(model.Email, confirmationLink!);
 
-            // Additional doctor profile creation logic can go here
-            return Ok(new RegisterResponse { UserId = user.Id, IsActive = user.IsDoctor ? false : true, RegistrationCompleted = user.IsDoctor ? false : true,
-                Token = new JwtSecurityTokenHandler().WriteToken(token), IsDoctor = user.IsDoctor });
+            return Ok(new RegisterResponse 
+            { 
+                Message = "Registration successful! Please check your email to confirm your account before logging in.",
+                UserId = user.Id, 
+                IsActive = user.IsDoctor ? false : true, 
+                RegistrationCompleted = user.IsDoctor ? false : true,
+                IsDoctor = user.IsDoctor 
+            });
         }
 
         [HttpPost("login")]
@@ -193,6 +179,10 @@ namespace MedicareApi.Controllers
                 );
                 Boolean registrationCompleted = false;
                 Boolean isActive = false;
+                Boolean isProfileCompleted = false;
+                Boolean isVerified = false;
+                string status = "active";
+
                 if(user.IsDoctor)
                 {
                     Doctor doctor = _db.Doctors.FirstOrDefault(d => d.UserId == user.Id);
@@ -202,20 +192,50 @@ namespace MedicareApi.Controllers
                     }
                     registrationCompleted = doctor.RegistrationCompleted;
                     isActive = doctor.IsActive;
+                    isProfileCompleted = doctor.IsProfileCompleted;
+                    isVerified = doctor.IsVerified;
+                    
+                    // Determine status for doctors
+                    if (!doctor.RegistrationCompleted)
+                    {
+                        status = "pending_registration";
+                    }
+                    else if (!doctor.IsProfileCompleted)
+                    {
+                        status = "pending_profile_completion";
+                    }
+                    else if (!doctor.IsVerified)
+                    {
+                        status = "waiting_for_approval";
+                    }
+                    else if (doctor.IsVerified && doctor.IsActive)
+                    {
+                        status = "active";
+                    }
+                    else
+                    {
+                        status = "inactive";
+                    }
                 }
                 else
                 {
                     registrationCompleted = true;
                     isActive = true;
+                    isProfileCompleted = true;
+                    isVerified = true;
+                    status = "active";
                 }
+
                 return Ok(new LoginResponse
                 {
                     Token = new JwtSecurityTokenHandler().WriteToken(token),
                     UserId = user.Id,
                     IsDoctor = user.IsDoctor,
                     IsActive = user.IsDoctor ? isActive : true,
-                    RegistrationCompleted = user.IsDoctor ? registrationCompleted : true
-
+                    RegistrationCompleted = user.IsDoctor ? registrationCompleted : true,
+                    IsProfileCompleted = user.IsDoctor ? isProfileCompleted : true,
+                    IsVerified = user.IsDoctor ? isVerified : true,
+                    Status = status
                 });
             }
             catch (Exception e)

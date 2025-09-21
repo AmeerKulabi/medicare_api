@@ -8,6 +8,8 @@
         public string Email { get; set; }
         public bool IsActive { get; set; }
         public bool RegistrationCompleted { get; set; }
+        public bool IsProfileCompleted { get; set; }
+        public bool IsVerified { get; set; }
         public string? ProfilePictureUrl { get; set; }
 
         // Add other doctor profile fields as needed
