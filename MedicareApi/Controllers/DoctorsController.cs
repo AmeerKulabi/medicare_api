@@ -148,10 +148,10 @@ namespace MedicareApi.Controllers
         {
             var doctor = await _db.Doctors.FindAsync(id);
             if (doctor == null) return NotFound();
-            
-            // Ensure profile picture URL includes default if none set
-            doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
-            return Ok(doctor);
+            var user = await _userManager.FindByIdAsync(doctor.UserId);
+
+            var doctorDetailsDto = DoctorHelper.FromDoctorToDoctorDetailsDto(doctor, user);
+            return Ok(doctorDetailsDto);
         }
     }
 }
