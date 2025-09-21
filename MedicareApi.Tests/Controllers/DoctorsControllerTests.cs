@@ -1,6 +1,7 @@
 using MedicareApi.Controllers;
 using MedicareApi.Data;
 using MedicareApi.Models;
+using MedicareApi.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +45,14 @@ namespace MedicareApi.Tests.Controllers
                 RegistrationCompleted = true,
                 Specialization = "Cardiology",
                 City = "Baghdad",
-                ClinicName = "Heart Clinic",
+                SubSpecialization = "Pediatric Cardiology",
+                YearsOfExperience = 12,
+                ProfessionalBiography = "Experienced cardiologist with focus on pediatric care",
+                MedicalSchool = "University of Baghdad",
+                GraduationYear = 2012,
+                ClinicName = "Heart Health Clinic",
+                ClinicAddress = "123 Main St, Baghdad",
+                Languages = new List<string> { "Arabic", "English" },
                 ConsultationFee = 100000,
                 ProfilePictureUrl = "test-picture.jpg"
             };
@@ -157,8 +165,68 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var doctor = Assert.IsType<Doctor>(okResult.Value);
-            Assert.Equal("Dr. John Smith", doctor.Name);
+            var doctorDto = Assert.IsType<DoctorDetailsDto>(okResult.Value);
+            Assert.Equal("Dr. John Smith", doctorDto.Name);
+        }
+
+        [Fact]
+        public async Task GetDoctorById_ValidId_ReturnsOnlyRequiredFields()
+        {
+            // Arrange
+            var controller = new DoctorsController(_context, _userManager);
+
+            // Act
+            var result = await controller.GetDoctorById("doctor-1");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var doctorDto = Assert.IsType<DoctorDetailsDto>(okResult.Value);
+            
+            // Verify all required fields are present with expected values
+            Assert.Equal("Dr. John Smith", doctorDto.Name);
+            Assert.Equal("john@test.com", doctorDto.Email);
+            Assert.Equal("Cardiology", doctorDto.Specialization);
+            Assert.Equal("Baghdad", doctorDto.City);
+            Assert.Equal("Pediatric Cardiology", doctorDto.SubSpecialization);
+            Assert.Equal(12, doctorDto.YearsOfExperience);
+            Assert.Equal("Experienced cardiologist with focus on pediatric care", doctorDto.ProfessionalBiography);
+            Assert.Equal("University of Baghdad", doctorDto.MedicalSchool);
+            Assert.Equal(2012, doctorDto.GraduationYear);
+            Assert.Equal("Heart Health Clinic", doctorDto.ClinicName);
+            Assert.Equal("123 Main St, Baghdad", doctorDto.ClinicAddress);
+            Assert.NotNull(doctorDto.Languages);
+            Assert.Equal(2, doctorDto.Languages.Count);
+            Assert.Contains("Arabic", doctorDto.Languages);
+            Assert.Contains("English", doctorDto.Languages);
+        }
+
+        [Fact]
+        public async Task GetDoctorById_ValidIdWithNullFields_ReturnsDefaultValues()
+        {
+            // Arrange
+            var controller = new DoctorsController(_context, _userManager);
+
+            // Act - doctor-2 has many null fields
+            var result = await controller.GetDoctorById("doctor-2");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var doctorDto = Assert.IsType<DoctorDetailsDto>(okResult.Value);
+            
+            // Verify default values for null fields
+            Assert.Equal("Dr. Jane Doe", doctorDto.Name);
+            Assert.Equal("jane@test.com", doctorDto.Email);
+            Assert.Equal("Dermatology", doctorDto.Specialization);
+            Assert.Equal("Basra", doctorDto.City);
+            Assert.Null(doctorDto.SubSpecialization);
+            Assert.Equal(0, doctorDto.YearsOfExperience); // Should default to 0
+            Assert.Null(doctorDto.ProfessionalBiography);
+            Assert.Null(doctorDto.MedicalSchool);
+            Assert.Null(doctorDto.GraduationYear);
+            Assert.Equal("Skin Clinic", doctorDto.ClinicName);
+            Assert.Null(doctorDto.ClinicAddress);
+            Assert.NotNull(doctorDto.Languages); // Should never be null, but empty list
+            Assert.Empty(doctorDto.Languages);
         }
 
         [Fact]
