@@ -47,7 +47,7 @@ namespace MedicareApi.Services
                                             <div style=""display:inline-block;box-shadow:0 4px 12px rgba(46,196,146,0.3);border-radius:12px;"">
                                                 <svg width=""64"" height=""64"" viewBox=""0 0 64 64"" fill=""none"" xmlns=""http://www.w3.org/2000/svg"">
                                                     <rect x=""4"" y=""4"" width=""56"" height=""56"" rx=""12"" ry=""12"" fill=""url(#gradient1)"" />
-                                                    <path d=""M41.68 20.44a11 11 0 0 0-15.56 0L24 22.34l-2.12-2.12a11 11 0 0 0-15.56 15.56l2.12 2.12L24 42.46l15.56-15.56 2.12-2.12a11 11 0 0 0 0-15.56z"" 
+                                                    <path d=""M32 50c0 0-16-10.5-16-20.5 0-5.5 4.5-10 10-10 3 0 6 1.5 6 1.5s3-1.5 6-1.5c5.5 0 10 4.5 10 10 0 10-16 20.5-16 20.5z"" 
                                                           stroke=""#fff"" 
                                                           stroke-width=""2.5"" 
                                                           fill=""none"" 
@@ -156,7 +156,7 @@ namespace MedicareApi.Services
                                             <div style=""display:inline-block;box-shadow:0 4px 12px rgba(46,196,146,0.3);border-radius:12px;"">
                                                 <svg width=""64"" height=""64"" viewBox=""0 0 64 64"" fill=""none"" xmlns=""http://www.w3.org/2000/svg"">
                                                     <rect x=""4"" y=""4"" width=""56"" height=""56"" rx=""12"" ry=""12"" fill=""url(#gradient2)"" />
-                                                    <path d=""M41.68 20.44a11 11 0 0 0-15.56 0L24 22.34l-2.12-2.12a11 11 0 0 0-15.56 15.56l2.12 2.12L24 42.46l15.56-15.56 2.12-2.12a11 11 0 0 0 0-15.56z"" 
+                                                    <path d=""M32 50c0 0-16-10.5-16-20.5 0-5.5 4.5-10 10-10 3 0 6 1.5 6 1.5s3-1.5 6-1.5c5.5 0 10 4.5 10 10 0 10-16 20.5-16 20.5z"" 
                                                           stroke=""#fff"" 
                                                           stroke-width=""2.5"" 
                                                           fill=""none"" 
@@ -266,7 +266,7 @@ namespace MedicareApi.Services
                                             <div style=""display:inline-block;box-shadow:0 4px 12px rgba(46,196,146,0.3);border-radius:12px;"">
                                                 <svg width=""64"" height=""64"" viewBox=""0 0 64 64"" fill=""none"" xmlns=""http://www.w3.org/2000/svg"">
                                                     <rect x=""4"" y=""4"" width=""56"" height=""56"" rx=""12"" ry=""12"" fill=""url(#gradient3)"" />
-                                                    <path d=""M41.68 20.44a11 11 0 0 0-15.56 0L24 22.34l-2.12-2.12a11 11 0 0 0-15.56 15.56l2.12 2.12L24 42.46l15.56-15.56 2.12-2.12a11 11 0 0 0 0-15.56z"" 
+                                                    <path d=""M32 50c0 0-16-10.5-16-20.5 0-5.5 4.5-10 10-10 3 0 6 1.5 6 1.5s3-1.5 6-1.5c5.5 0 10 4.5 10 10 0 10-16 20.5-16 20.5z"" 
                                                           stroke=""#fff"" 
                                                           stroke-width=""2.5"" 
                                                           fill=""none"" 
