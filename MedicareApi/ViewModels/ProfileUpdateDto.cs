@@ -23,7 +23,6 @@ namespace MedicareApi.ViewModels
         public string? SubSpecialization { get; set; }
 
         // الخبرة
-        [StringLength(20)]
         public int? YearsOfExperience { get; set; }
 
         // التعليم
@@ -47,7 +46,6 @@ namespace MedicareApi.ViewModels
 
 
         // الرسوم
-        [StringLength(20)]
         public int? ConsultationFee { get; set; }
 
         public string? City { get; set; }
