@@ -3,6 +3,7 @@ using MedicareApi.Models;
 using MedicareApi.Utils;
 using MedicareApi.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -15,10 +16,12 @@ namespace MedicareApi.Controllers
     public class ProfileController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ProfileController(ApplicationDbContext db)
+        public ProfileController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
         {
             _db = db;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -30,11 +33,12 @@ namespace MedicareApi.Controllers
 
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
             if (doctor == null) return NotFound();
+            var user = await _userManager.FindByIdAsync(doctor.UserId);
 
             // Ensure profile picture URL includes default if none set
             doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
 
-            return Ok(doctor);
+            return Ok(DoctorHelper.FromDoctorToDoctorProfileDto(doctor, user));
         }
 
         [HttpPut]
@@ -71,6 +75,13 @@ namespace MedicareApi.Controllers
             if (updateDto.TermsAccepted.HasValue) doctor.TermsAccepted = updateDto.TermsAccepted.Value;
             if (updateDto.PrivavyAccepted.HasValue) doctor.PrivacyAccepted = updateDto.PrivavyAccepted;
             if (updateDto.City != null) doctor.City = updateDto.City;
+
+            if(updateDto.Phone != null)
+            {
+                var user = await _userManager.FindByIdAsync(doctor.UserId);
+                user.Phone = updateDto.Phone;
+                await _userManager.UpdateAsync(user);
+            }
 
             if (!doctor.RegistrationCompleted) doctor.RegistrationCompleted = true;
 

@@ -42,5 +42,33 @@ namespace MedicareApi.Utils
                 Phone = user.Phone
             };
         }
+
+        public static DoctorProfileDto FromDoctorToDoctorProfileDto(Doctor doctor, ApplicationUser user)
+        {
+            return new DoctorProfileDto()
+            {
+                Id = doctor.Id,
+                Name = doctor.Name ?? string.Empty,
+                Email = doctor.Email ?? string.Empty,
+                DateOfBirth = doctor.DateOfBirth,
+                Gender = doctor.Gender,
+                ConsultationFee = doctor.ConsultationFee,
+                YearsOfExperience = doctor.YearsOfExperience,
+                Phone = user.Phone,
+                Specialization = doctor.Specialization,
+                SubSpecialization = doctor.SubSpecialization,
+                City = doctor.City,
+                ClinicAddress = doctor.ClinicAddress,
+                ClinicName = doctor.ClinicName,
+                ClinicType = doctor.ClinicType,
+                MedicalLicense = doctor.MedicalLicense,
+                LicenseExpiry = doctor.LicenseExpiry,
+                ProfessionalBiography = doctor.ProfessionalBiography,
+                GraduationYear = doctor.GraduationYear,
+                MedicalSchool = doctor.MedicalSchool,
+                Languages = doctor.Languages,
+                ProfilePictureUrl = doctor.ProfilePictureUrl
+            };
+        }
     }
 }

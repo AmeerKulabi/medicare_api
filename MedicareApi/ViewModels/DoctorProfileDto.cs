@@ -1,9 +1,11 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace MedicareApi.ViewModels
 {
-    public class ProfileUpdateDto
+    public class DoctorProfileDto
     {
+        public string Id { get; set; }
+        public string? Name { get; set; }
         // تاريخ الميلاد
         public DateTime? DateOfBirth { get; set; }
 
@@ -56,9 +58,7 @@ namespace MedicareApi.ViewModels
         public List<string>? Languages { get; set; }
 
         public string? Phone {  get; set; }
-
-        // الشروط والخصوصية
-        public bool? TermsAccepted { get; set; }
-        public bool? PrivavyAccepted { get; set; }
+        public string? Email { get; set; }
+        public string? ProfilePictureUrl { get; set; }
     }
 }

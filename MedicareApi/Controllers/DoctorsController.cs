@@ -117,16 +117,6 @@ namespace MedicareApi.Controllers
             return Ok(response);
         }
 
-        private static int ParseExperience(string? experienceString)
-        {
-            if (string.IsNullOrEmpty(experienceString))
-                return 0;
-
-            // Try to extract numeric value from experience string
-            var digits = string.Concat(experienceString.Where(char.IsDigit));
-            return int.TryParse(digits, out var experience) ? experience : 0;
-        }
-
         [HttpGet("languages")]
         public async Task<IActionResult> GetLanguages()
         {
