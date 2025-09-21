@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Xunit;
 using System.Linq;
+using Microsoft.AspNetCore.Identity;
 
 namespace MedicareApi.Tests.Controllers
 {
@@ -15,6 +16,7 @@ namespace MedicareApi.Tests.Controllers
         private readonly TestFixture _fixture;
         private readonly ApplicationDbContext _context;
         private readonly IServiceProvider _serviceProvider;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public PatientAppointmentControllerTests(TestFixture fixture)
         {
@@ -45,7 +47,7 @@ namespace MedicareApi.Tests.Controllers
                 RegistrationCompleted = true,
                 Specialization = "Cardiology",
                 ClinicName = "Heart Clinic",
-                ConsultationFee = "100"
+                ConsultationFee = 100
             };
 
             var pastAppointment = new Appointment
@@ -87,7 +89,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContextWithoutAuth(controller);
 
             // Act
@@ -101,7 +103,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_DoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -115,7 +117,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_UpcomingType_ReturnsFutureAppointments()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -132,7 +134,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_PastType_ReturnsPastAppointments()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -149,7 +151,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_DefaultType_ReturnsFutureAppointments()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -165,7 +167,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_OnlyReturnsOwnAppointments()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -183,7 +185,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_PopulatesCorrectDoctorInformation()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -206,7 +208,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeletePatientAppointment_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContextWithoutAuth(controller);
 
             // Act
@@ -220,7 +222,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeletePatientAppointment_DoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -234,7 +236,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeletePatientAppointment_AppointmentNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -248,7 +250,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeletePatientAppointment_OtherPatientsAppointment_ReturnsNotFound()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act - Try to delete another patient's appointment
@@ -262,7 +264,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeletePatientAppointment_ValidAppointment_DeletesSuccessfully()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Verify appointment exists before deletion
@@ -284,7 +286,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_NoAppointments_ReturnsEmptyList()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-without-appointments", false);
 
             // Act
@@ -300,7 +302,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetPatientAppointments_FormatsDateAndTimeCorrectly()
         {
             // Arrange
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -369,7 +371,7 @@ namespace MedicareApi.Tests.Controllers
             _context.Appointments.Add(appointmentWithNullReason);
             await _context.SaveChangesAsync();
 
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -401,7 +403,7 @@ namespace MedicareApi.Tests.Controllers
             _context.Appointments.Add(appointmentWithEmptyReason);
             await _context.SaveChangesAsync();
 
-            var controller = new PatientAppointmentController(_context, null);
+            var controller = new PatientAppointmentController(_context, null, _userManager);
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act

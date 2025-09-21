@@ -15,8 +15,6 @@ namespace MedicareApi.ViewModels
         [StringLength(100)]
         public string? MedicalLicense { get; set; }
 
-        [StringLength(100)]
-        public string? LicenseState { get; set; }
 
         public DateTime? LicenseExpiry { get; set; }
 
@@ -26,33 +24,33 @@ namespace MedicareApi.ViewModels
 
         // الخبرة
         [StringLength(20)]
-        public string? YearsOfExperience { get; set; }
+        public int? YearsOfExperience { get; set; }
 
         // التعليم
         [StringLength(200)]
         public string? MedicalSchool { get; set; }
 
         [StringLength(10)]
-        public string? GraduationYear { get; set; }
+        public int? GraduationYear { get; set; }
 
-        public string? Bio { get; set; }   // maps to ProfessionalBiography
-        public string? Education { get; set; }
+        public string? ProfessionalBiography { get; set; }   // maps to ProfessionalBiography
 
         // المستشفى / العيادة
         [StringLength(200)]
         public string? ClinicName { get; set; }
 
         [StringLength(100)]
-        public string? PracticeType { get; set; }
+        public string? ClinicType { get; set; }
 
-        public List<string>? ServicesOffered { get; set; }
+        [StringLength(100)]
+        public string? ClinicAddress { get; set; }
+
 
         // الرسوم
         [StringLength(20)]
-        public string? ConsultationFee { get; set; }
+        public int? ConsultationFee { get; set; }
 
-        // المواعيد
-        public string? Availability { get; set; }
+        public string? City { get; set; }
 
         // اللغات
         public List<string>? Languages { get; set; }
@@ -60,12 +58,5 @@ namespace MedicareApi.ViewModels
         // الشروط والخصوصية
         public bool? TermsAccepted { get; set; }
         public bool? PrivavyAccepted { get; set; }
-
-        // صورة الملف الشخصي
-        public string? ProfilePictureUrl { get; set; }
-
-        public string? Email { get; set; }
-
-        public string? ProfessionalBiography { get; set; }
     }
 }

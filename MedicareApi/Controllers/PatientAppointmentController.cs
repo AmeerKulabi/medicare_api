@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MedicareApi.Services;
+using Microsoft.AspNetCore.Identity;
 
 namespace MedicareApi.Controllers
 {
@@ -13,16 +14,18 @@ namespace MedicareApi.Controllers
     public class PatientAppointmentController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         /// <summary>
         /// Email service.
         /// </summary>
         private readonly IEmailService _emailService;
 
-        public PatientAppointmentController(ApplicationDbContext db, IEmailService emailService)
+        public PatientAppointmentController(ApplicationDbContext db, IEmailService emailService, UserManager<ApplicationUser> userManager)
         {
             _db = db;
             _emailService = emailService;
+            _userManager = userManager;
         }
 
         [HttpDelete("{id}")]
@@ -51,7 +54,8 @@ namespace MedicareApi.Controllers
         {
             var userId = User.FindFirst("uid")?.Value;
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
-            
+            var user = await _userManager.FindByIdAsync(userId);
+
             var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
             if (isDoctor) return Unauthorized();
 
@@ -77,15 +81,15 @@ namespace MedicareApi.Controllers
                     reason = appointment.Reason ?? "",
                     status = appointment.Status,
                     type = "consultation",
-                    address = null, // Removed deprecated ClinicAddress field
-                    phone = null, // Removed deprecated Phone field
-                    consultationFee = int.Parse(doctor.ConsultationFee),
+                    address = doctor.ClinicAddress, // Removed deprecated ClinicAddress field
+                    phone = user.Phone, // Removed deprecated Phone field
+                    consultationFee = doctor.ConsultationFee ?? 0,
                 });
             }
             
             return Ok(patientAppointments);
-
-
         }
+
+
     }
 }

@@ -105,9 +105,9 @@ namespace MedicareApi.Tests
                 IsActive = true,
                 RegistrationCompleted = true,
                 Specialization = "General Medicine",
-                Location = "Baghdad",
+                City = "Baghdad",
                 ClinicName = "Test Clinic",
-                ConsultationFee = "50"
+                ConsultationFee = 50
             };
 
             context.Doctors.Add(doctor);

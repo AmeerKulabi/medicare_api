@@ -1,7 +1,9 @@
 ﻿using MedicareApi.Data;
 using MedicareApi.Models;
 using MedicareApi.Utils;
+using MedicareApi.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -13,10 +15,12 @@ namespace MedicareApi.Controllers
     public class DoctorsController : ControllerBase
     {
         private readonly ApplicationDbContext _db;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public DoctorsController(ApplicationDbContext db)
+        public DoctorsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
         {
             _db = db;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -39,7 +43,7 @@ namespace MedicareApi.Controllers
             if (!string.IsNullOrEmpty(specialization))
                 query = query.Where(d => d.Specialization == specialization);
             if (!string.IsNullOrEmpty(location))
-                query = query.Where(d => d.Location == location);
+                query = query.Where(d => d.City == location);
             if (!string.IsNullOrEmpty(search))
                 query = query.Where(d => d.Name.Contains(search) || d.Specialization.Contains(search));
             if (languages != null && languages.Count > 0)
@@ -59,21 +63,21 @@ namespace MedicareApi.Controllers
                 {
                     case "experience":
                     case "experience_desc":
-                        sortedDoctors = allFilteredDoctors.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
+                        sortedDoctors = allFilteredDoctors.OrderByDescending(d => d.YearsOfExperience);
                         break;
                     case "experience_asc":
-                        sortedDoctors = allFilteredDoctors.OrderBy(d => ParseExperience(d.YearsOfExperience));
+                        sortedDoctors = allFilteredDoctors.OrderBy(d => d.YearsOfExperience);
                         break;
                     default:
                         // Default sort by experience descending
-                        sortedDoctors = allFilteredDoctors.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
+                        sortedDoctors = allFilteredDoctors.OrderByDescending(d => d.YearsOfExperience);
                         break;
                 }
             }
             else
             {
                 // Default sort by experience descending
-                sortedDoctors = allFilteredDoctors.OrderByDescending(d => ParseExperience(d.YearsOfExperience));
+                sortedDoctors = allFilteredDoctors.OrderByDescending(d => d.YearsOfExperience);
             }
 
             // Apply pagination to sorted data
@@ -88,11 +92,20 @@ namespace MedicareApi.Controllers
                 doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
             }
 
+            List<DoctorListingItem> doctorListingItems = new List<DoctorListingItem>();
+            foreach(var doctor in doctors)
+            {
+                if(doctor.IsActive && doctor.RegistrationCompleted)
+                {
+                    doctorListingItems.Add(DoctorHelper.FromDoctorToDoctorListingItem(doctor, await _userManager.FindByIdAsync(doctor.UserId)));
+                }
+            }
+
             // Create paginated response
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-            var response = new PaginatedResponse<Doctor>
+            var response = new PaginatedResponse<DoctorListingItem>
             {
-                Doctors = doctors,
+                Doctors = doctorListingItems,
                 TotalCount = totalCount,
                 PageSize = pageSize,
                 CurrentPage = page,
@@ -138,7 +151,6 @@ namespace MedicareApi.Controllers
             
             // Ensure profile picture URL includes default if none set
             doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
-            
             return Ok(doctor);
         }
     }

@@ -48,11 +48,10 @@ namespace MedicareApi.Controllers
             if (doctor == null) return NotFound();
 
             // Map fields from DTO to Doctor entity
-            if (updateDto.DateOfBirth.HasValue) doctor.DateOfBirth = updateDto.DateOfBirth.ToString();
+            if (updateDto.DateOfBirth.HasValue) doctor.DateOfBirth = updateDto.DateOfBirth;
             if (updateDto.Gender != null) doctor.Gender = updateDto.Gender;
             if (updateDto.MedicalLicense != null) doctor.MedicalLicense = updateDto.MedicalLicense;
-            if (updateDto.LicenseState != null) doctor.LicenseState = updateDto.LicenseState;
-            if (updateDto.LicenseExpiry.HasValue) doctor.LicenseExpiry = updateDto.LicenseExpiry.ToString();
+            if (updateDto.LicenseExpiry.HasValue) doctor.LicenseExpiry = updateDto.LicenseExpiry;
 
             if (updateDto.Specialization != null) doctor.Specialization = updateDto.Specialization;
             if (updateDto.SubSpecialization != null) doctor.SubSpecialization = updateDto.SubSpecialization;
@@ -60,27 +59,24 @@ namespace MedicareApi.Controllers
 
             if (updateDto.MedicalSchool != null) doctor.MedicalSchool = updateDto.MedicalSchool;
             if (updateDto.GraduationYear != null) doctor.GraduationYear = updateDto.GraduationYear;
-            if (updateDto.Bio != null) doctor.ProfessionalBiography = updateDto.Bio;
+            if (updateDto.ProfessionalBiography != null) doctor.ProfessionalBiography = updateDto.ProfessionalBiography;
 
             if (updateDto.ClinicName != null) doctor.ClinicName = updateDto.ClinicName;
-            if (updateDto.PracticeType != null) doctor.PracticeType = updateDto.PracticeType;
-            if (updateDto.ServicesOffered != null) doctor.ServicesOffered = updateDto.ServicesOffered;
+            if (updateDto.ClinicType != null) doctor.ClinicType = updateDto.ClinicType;
+            if (updateDto.ClinicAddress != null) doctor.ClinicAddress = updateDto.ClinicAddress;
 
             if (updateDto.ConsultationFee != null) doctor.ConsultationFee = updateDto.ConsultationFee;
-            if (updateDto.Availability != null) doctor.Availability = updateDto.Availability;
             if (updateDto.Languages != null) doctor.Languages = updateDto.Languages;
 
             if (updateDto.TermsAccepted.HasValue) doctor.TermsAccepted = updateDto.TermsAccepted.Value;
             if (updateDto.PrivavyAccepted.HasValue) doctor.PrivacyAccepted = updateDto.PrivavyAccepted;
-
-            if (updateDto.ProfilePictureUrl != null)
-                doctor.ProfilePictureUrl = updateDto.ProfilePictureUrl;
+            if (updateDto.City != null) doctor.City = updateDto.City;
 
             if (!doctor.RegistrationCompleted) doctor.RegistrationCompleted = true;
 
-#if DEBUG
-            if (!doctor.IsActive) doctor.IsActive = true;
-#endif
+            #if DEBUG
+                if (!doctor.IsActive) doctor.IsActive = true;
+            #endif
 
             await _db.SaveChangesAsync();
 

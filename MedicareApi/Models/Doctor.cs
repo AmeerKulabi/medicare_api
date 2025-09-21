@@ -14,33 +14,29 @@
 
         // Personal Information
         public string? Specialization { get; set; }
-        public string? Location { get; set; }
+        public string? City { get; set; }
         
-        public string? DateOfBirth { get; set; }  // Consider using DateTime if you're sending ISO format
+        public DateTime? DateOfBirth { get; set; }  // Consider using DateTime if you're sending ISO format
         public string? Gender { get; set; }
 
         // Professional Information
         public string? MedicalLicense { get; set; }
-        public string? LicenseState { get; set; }
-        public string? LicenseExpiry { get; set; }
+        public DateTime? LicenseExpiry { get; set; }
         public string? SubSpecialization { get; set; }
-        public string? YearsOfExperience { get; set; }
+        public int? YearsOfExperience { get; set; }
         public string? ProfessionalBiography { get; set; }
 
         // Education & Training
         public string? MedicalSchool { get; set; }
-        public string? GraduationYear { get; set; }
+        public int? GraduationYear { get; set; }
 
         // Practice Information
         public string? ClinicName { get; set; }
         public string? ClinicAddress { get; set; }
-        public string? PracticeType { get; set; }
-        public string? Phone { get; set; }
+        public string? ClinicType { get; set; }
 
         // Services & Availability
-        public List<string>? ServicesOffered { get; set; }
-        public string? ConsultationFee { get; set; }
-        public string? Availability { get; set; }
+        public int? ConsultationFee { get; set; }
         public List<string>? Languages { get; set; }
 
         // Terms
