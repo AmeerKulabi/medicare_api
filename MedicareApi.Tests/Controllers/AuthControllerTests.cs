@@ -96,10 +96,8 @@ namespace MedicareApi.Tests.Controllers
             };
             controller.ControllerContext = controllerContext;
             
-            // Setup URL helper
+            // Setup URL helper - use a simple approach to avoid extension method mocking issues
             var urlHelper = new Mock<IUrlHelper>();
-            urlHelper.Setup(u => u.Action(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
-                .Returns("https://localhost/confirm-email?userId=test&token=test");
             controller.Url = urlHelper.Object;
             
             return controller;
@@ -150,7 +148,7 @@ namespace MedicareApi.Tests.Controllers
             var response = okResult.Value;
             Assert.NotNull(response);
             // Check that the response contains the message and userId
-            var messageProperty = response.GetType().GetProperty("message");
+            var messageProperty = response.GetType().GetProperty("Message");
             Assert.NotNull(messageProperty);
             var message = messageProperty.GetValue(response) as string;
             Assert.Contains("check your email", message);
