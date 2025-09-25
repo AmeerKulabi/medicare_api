@@ -1,0 +1,20 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rounded square background with soft green gradient -->
+  <rect x="4" y="4" width="56" height="56" rx="12" ry="12" fill="url(#gradient)" />
+  
+  <!-- White heart outline in the center -->
+  <path d="M32 50c0 0-16-10.5-16-20.5 0-5.5 4.5-10 10-10 3 0 6 1.5 6 1.5s3-1.5 6-1.5c5.5 0 10 4.5 10 10 0 10-16 20.5-16 20.5z" 
+        stroke="#fff" 
+        stroke-width="2.5" 
+        fill="none" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2EC492;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#26b47f;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

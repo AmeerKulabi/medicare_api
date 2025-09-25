@@ -44,12 +44,23 @@ namespace MedicareApi.Services
                                     <!-- Header / Brand -->
                                     <tr>
                                         <td align=""center"" style=""background: #eafaf0; padding: 24px 0;"">
-                                            <span style=""display:inline-block;background:#2EC492;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
-                                                <svg width=""28"" height=""28"" fill=""none"" viewBox=""0 0 24 24"">
-                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#2EC492""/>
-                                                    <path d=""M8.5 12.5l2.5 2.5 4.5-4.5"" stroke=""#fff"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""/>
+                                            <div style=""display:inline-block;box-shadow:0 4px 12px rgba(46,196,146,0.3);border-radius:12px;"">
+                                                <svg width=""64"" height=""64"" viewBox=""0 0 64 64"" fill=""none"" xmlns=""http://www.w3.org/2000/svg"">
+                                                    <rect x=""4"" y=""4"" width=""56"" height=""56"" rx=""12"" ry=""12"" fill=""url(#gradient1)"" />
+                                                    <path d=""M32 50c0 0-16-10.5-16-20.5 0-5.5 4.5-10 10-10 3 0 6 1.5 6 1.5s3-1.5 6-1.5c5.5 0 10 4.5 10 10 0 10-16 20.5-16 20.5z"" 
+                                                          stroke=""#fff"" 
+                                                          stroke-width=""2.5"" 
+                                                          fill=""none"" 
+                                                          stroke-linecap=""round"" 
+                                                          stroke-linejoin=""round""/>
+                                                    <defs>
+                                                        <linearGradient id=""gradient1"" x1=""0%"" y1=""0%"" x2=""100%"" y2=""100%"">
+                                                            <stop offset=""0%"" style=""stop-color:#2EC492;stop-opacity:1"" />
+                                                            <stop offset=""100%"" style=""stop-color:#26b47f;stop-opacity:1"" />
+                                                        </linearGradient>
+                                                    </defs>
                                                 </svg>
-                                            </span>
+                                            </div>
                                             <div style=""font-size: 20px; font-weight: bold; color: #222; margin-top: 12px;"">صحتك</div>
                                         </td>
                                     </tr>
@@ -142,12 +153,23 @@ namespace MedicareApi.Services
                                 <table width=""520"" cellpadding=""0"" cellspacing=""0"" style=""background: #fff; border-radius: 18px; box-shadow: 0 2px 8px #e0e4e9; overflow: hidden;"">
                                     <tr>
                                         <td align=""center"" style=""background: #eafaf0; padding: 24px 0;"">
-                                            <span style=""display:inline-block;background:#2EC492;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
-                                                <svg width=""28"" height=""28"" fill=""none"" viewBox=""0 0 24 24"">
-                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#2EC492""/>
-                                                    <path d=""M8.5 12.5l2.5 2.5 4.5-4.5"" stroke=""#fff"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""/>
+                                            <div style=""display:inline-block;box-shadow:0 4px 12px rgba(46,196,146,0.3);border-radius:12px;"">
+                                                <svg width=""64"" height=""64"" viewBox=""0 0 64 64"" fill=""none"" xmlns=""http://www.w3.org/2000/svg"">
+                                                    <rect x=""4"" y=""4"" width=""56"" height=""56"" rx=""12"" ry=""12"" fill=""url(#gradient2)"" />
+                                                    <path d=""M32 50c0 0-16-10.5-16-20.5 0-5.5 4.5-10 10-10 3 0 6 1.5 6 1.5s3-1.5 6-1.5c5.5 0 10 4.5 10 10 0 10-16 20.5-16 20.5z"" 
+                                                          stroke=""#fff"" 
+                                                          stroke-width=""2.5"" 
+                                                          fill=""none"" 
+                                                          stroke-linecap=""round"" 
+                                                          stroke-linejoin=""round""/>
+                                                    <defs>
+                                                        <linearGradient id=""gradient2"" x1=""0%"" y1=""0%"" x2=""100%"" y2=""100%"">
+                                                            <stop offset=""0%"" style=""stop-color:#2EC492;stop-opacity:1"" />
+                                                            <stop offset=""100%"" style=""stop-color:#26b47f;stop-opacity:1"" />
+                                                        </linearGradient>
+                                                    </defs>
                                                 </svg>
-                                            </span>
+                                            </div>
                                             <div style=""font-size: 20px; font-weight: bold; color: #222; margin-top: 12px;"">صحتك</div>
                                         </td>
                                     </tr>
@@ -241,12 +263,23 @@ namespace MedicareApi.Services
                                 <table width=""420"" cellpadding=""0"" cellspacing=""0"" style=""background: #fff; border-radius: 18px; box-shadow: 0 2px 8px #e0e4e9; overflow: hidden;"">
                                     <tr>
                                         <td align=""center"" style=""background: #eafaf0; padding: 24px 0;"">
-                                            <span style=""display:inline-block;background:#2EC492;border-radius:50%;width:48px;height:48px;line-height:48px;text-align:center;"">
-                                                <svg width=""28"" height=""28"" fill=""none"" viewBox=""0 0 24 24"">
-                                                    <circle cx=""12"" cy=""12"" r=""12"" fill=""#2EC492""/>
-                                                    <path d=""M8.5 12.5l2.5 2.5 4.5-4.5"" stroke=""#fff"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""/>
+                                            <div style=""display:inline-block;box-shadow:0 4px 12px rgba(46,196,146,0.3);border-radius:12px;"">
+                                                <svg width=""64"" height=""64"" viewBox=""0 0 64 64"" fill=""none"" xmlns=""http://www.w3.org/2000/svg"">
+                                                    <rect x=""4"" y=""4"" width=""56"" height=""56"" rx=""12"" ry=""12"" fill=""url(#gradient3)"" />
+                                                    <path d=""M32 50c0 0-16-10.5-16-20.5 0-5.5 4.5-10 10-10 3 0 6 1.5 6 1.5s3-1.5 6-1.5c5.5 0 10 4.5 10 10 0 10-16 20.5-16 20.5z"" 
+                                                          stroke=""#fff"" 
+                                                          stroke-width=""2.5"" 
+                                                          fill=""none"" 
+                                                          stroke-linecap=""round"" 
+                                                          stroke-linejoin=""round""/>
+                                                    <defs>
+                                                        <linearGradient id=""gradient3"" x1=""0%"" y1=""0%"" x2=""100%"" y2=""100%"">
+                                                            <stop offset=""0%"" style=""stop-color:#2EC492;stop-opacity:1"" />
+                                                            <stop offset=""100%"" style=""stop-color:#26b47f;stop-opacity:1"" />
+                                                        </linearGradient>
+                                                    </defs>
                                                 </svg>
-                                            </span>
+                                            </div>
                                             <div style=""font-size: 20px; font-weight: bold; color: #222; margin-top: 12px;"">صحتك</div>
                                         </td>
                                     </tr>
