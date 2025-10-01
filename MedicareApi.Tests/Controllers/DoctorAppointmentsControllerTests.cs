@@ -217,13 +217,25 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var createdAppointment = Assert.IsType<Appointment>(okResult.Value);
-            Assert.Equal("patient-user-id", createdAppointment.PatientId);
-            Assert.Equal("test-doctor-id", createdAppointment.DoctorId);
-            Assert.Equal("New appointment", createdAppointment.Reason);
+            Assert.NotNull(okResult.Value);
+            
+            // Extract properties from anonymous object
+            var response = okResult.Value;
+            var idProperty = response.GetType().GetProperty("id");
+            var patientIdProperty = response.GetType().GetProperty("patientId");
+            var reasonProperty = response.GetType().GetProperty("reason");
+            var dateProperty = response.GetType().GetProperty("date");
+            var timeProperty = response.GetType().GetProperty("time");
+            
+            Assert.NotNull(idProperty);
+            Assert.NotNull(dateProperty);
+            Assert.NotNull(timeProperty);
+            var appointmentId = idProperty.GetValue(response)?.ToString();
+            Assert.Equal("patient-user-id", patientIdProperty?.GetValue(response)?.ToString());
+            Assert.Equal("New appointment", reasonProperty?.GetValue(response)?.ToString());
 
             // Verify appointment was saved to database
-            var dbAppointment = await _context.Appointments.FindAsync(createdAppointment.Id);
+            var dbAppointment = await _context.Appointments.FindAsync(appointmentId);
             Assert.NotNull(dbAppointment);
         }
 
@@ -248,9 +260,12 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var createdAppointment = Assert.IsType<Appointment>(okResult.Value);
-            Assert.Equal("patient-user-id", createdAppointment.PatientId);
-            Assert.Equal("test-doctor-id", createdAppointment.DoctorId);
+            Assert.NotNull(okResult.Value);
+            var response = okResult.Value;
+            var patientIdProperty = response.GetType().GetProperty("patientId");
+            var doctorIdProperty = response.GetType().GetProperty("doctorId");
+            Assert.Equal("patient-user-id", patientIdProperty?.GetValue(response)?.ToString());
+            Assert.Equal("test-doctor-id", doctorIdProperty?.GetValue(response)?.ToString());
         }
 
         [Fact]
@@ -445,13 +460,20 @@ namespace MedicareApi.Tests.Controllers
             
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var createdAppointment = Assert.IsType<Appointment>(okResult.Value);
-            Assert.Null(createdAppointment.Reason); // Reason should be null
-            Assert.Equal("patient-user-id", createdAppointment.PatientId);
-            Assert.Equal("test-doctor-id", createdAppointment.DoctorId);
+            Assert.NotNull(okResult.Value);
+            var response = okResult.Value;
+            var idProperty = response.GetType().GetProperty("id");
+            var reasonProperty = response.GetType().GetProperty("reason");
+            var patientIdProperty = response.GetType().GetProperty("patientId");
+            var doctorIdProperty = response.GetType().GetProperty("doctorId");
+            
+            Assert.Null(reasonProperty?.GetValue(response)); // Reason should be null
+            Assert.Equal("patient-user-id", patientIdProperty?.GetValue(response)?.ToString());
+            Assert.Equal("test-doctor-id", doctorIdProperty?.GetValue(response)?.ToString());
 
             // Verify appointment was saved to database
-            var dbAppointment = await _context.Appointments.FindAsync(createdAppointment.Id);
+            var appointmentId = idProperty?.GetValue(response)?.ToString();
+            var dbAppointment = await _context.Appointments.FindAsync(appointmentId);
             Assert.NotNull(dbAppointment);
             Assert.Null(dbAppointment.Reason); // Reason should be null in the database too
         }
@@ -477,13 +499,20 @@ namespace MedicareApi.Tests.Controllers
             
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var createdAppointment = Assert.IsType<Appointment>(okResult.Value);
-            Assert.Equal("", createdAppointment.Reason); // Reason should be empty string
-            Assert.Equal("patient-user-id", createdAppointment.PatientId);
-            Assert.Equal("test-doctor-id", createdAppointment.DoctorId);
+            Assert.NotNull(okResult.Value);
+            var response = okResult.Value;
+            var idProperty = response.GetType().GetProperty("id");
+            var reasonProperty = response.GetType().GetProperty("reason");
+            var patientIdProperty = response.GetType().GetProperty("patientId");
+            var doctorIdProperty = response.GetType().GetProperty("doctorId");
+            
+            Assert.Equal("", reasonProperty?.GetValue(response)?.ToString()); // Reason should be empty string
+            Assert.Equal("patient-user-id", patientIdProperty?.GetValue(response)?.ToString());
+            Assert.Equal("test-doctor-id", doctorIdProperty?.GetValue(response)?.ToString());
 
             // Verify appointment was saved to database
-            var dbAppointment = await _context.Appointments.FindAsync(createdAppointment.Id);
+            var appointmentId = idProperty?.GetValue(response)?.ToString();
+            var dbAppointment = await _context.Appointments.FindAsync(appointmentId);
             Assert.NotNull(dbAppointment);
             Assert.Equal("", dbAppointment.Reason); // Reason should be empty string in the database
         }
@@ -817,6 +846,216 @@ namespace MedicareApi.Tests.Controllers
 
             // Assert
             Assert.Empty(validationResults);
+        }
+
+        [Fact]
+        public void GetBlockedAvailability_WithMonthlyFilter_ReturnsFlatArray()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            
+            // Add some test appointments for next month
+            var nextMonth = DateTime.UtcNow.AddMonths(1);
+            var appointment1 = new Appointment
+            {
+                Id = "appointment-3",
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = new DateTime(nextMonth.Year, nextMonth.Month, 15, 10, 0, 0),
+                Reason = "Monthly test"
+            };
+            var appointment2 = new Appointment
+            {
+                Id = "appointment-4",
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = new DateTime(nextMonth.Year, nextMonth.Month, 20, 14, 30, 0),
+                Reason = "Another test"
+            };
+            _context.Appointments.AddRange(appointment1, appointment2);
+            _context.SaveChangesAsync().Wait();
+
+            // Act
+            var result = controller.GetBlockedAvailability("test-doctor-id", nextMonth.Year, nextMonth.Month);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var slots = Assert.IsAssignableFrom<IEnumerable<object>>(okResult.Value);
+            Assert.Equal(2, slots.Count());
+        }
+
+        [Fact]
+        public void GetBlockedAvailability_WithoutMonthYear_UsesCurrentMonth()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            
+            // Add appointment in current month
+            var now = DateTime.UtcNow;
+            var appointment = new Appointment
+            {
+                Id = "appointment-current",
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = new DateTime(now.Year, now.Month, 15, 10, 0, 0),
+                Reason = "Current month test"
+            };
+            _context.Appointments.Add(appointment);
+            _context.SaveChangesAsync().Wait();
+
+            // Act - no year/month specified, should use current
+            var result = controller.GetBlockedAvailability("test-doctor-id", null, null);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var slots = Assert.IsAssignableFrom<IEnumerable<object>>(okResult.Value);
+            Assert.NotEmpty(slots);
+        }
+
+        [Fact]
+        public void GetBlockedAvailability_IncludesBlockedTimeSlots()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            
+            var nextMonth = DateTime.UtcNow.AddMonths(1);
+            
+            // Add a blocked time slot
+            var blockedSlot = new BlockedTimeSlot
+            {
+                Id = "blocked-1",
+                DoctorId = "test-doctor-id",
+                StartTime = new DateTime(nextMonth.Year, nextMonth.Month, 10, 9, 0, 0),
+                EndTime = new DateTime(nextMonth.Year, nextMonth.Month, 10, 12, 0, 0),
+                IsWholeDay = false,
+                Reason = "Personal time"
+            };
+            _context.BlockedTimeSlots.Add(blockedSlot);
+            
+            // Add a booked appointment
+            var appointment = new Appointment
+            {
+                Id = "appointment-5",
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = new DateTime(nextMonth.Year, nextMonth.Month, 15, 10, 0, 0),
+                Reason = "Test appointment"
+            };
+            _context.Appointments.Add(appointment);
+            _context.SaveChangesAsync().Wait();
+
+            // Act
+            var result = controller.GetBlockedAvailability("test-doctor-id", nextMonth.Year, nextMonth.Month);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var slots = Assert.IsAssignableFrom<IEnumerable<object>>(okResult.Value);
+            // Should have both blocked slot and booked appointment
+            Assert.Equal(2, slots.Count());
+        }
+
+        [Fact]
+        public void GetBlockedAvailability_WholeDayBlock_ReturnsCorrectFormat()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            
+            var nextMonth = DateTime.UtcNow.AddMonths(1);
+            
+            // Add a whole-day blocked time slot
+            var blockedSlot = new BlockedTimeSlot
+            {
+                Id = "blocked-whole-day",
+                DoctorId = "test-doctor-id",
+                StartTime = new DateTime(nextMonth.Year, nextMonth.Month, 25, 0, 0, 0),
+                EndTime = new DateTime(nextMonth.Year, nextMonth.Month, 25, 23, 59, 59),
+                IsWholeDay = true,
+                Reason = "Day off"
+            };
+            _context.BlockedTimeSlots.Add(blockedSlot);
+            _context.SaveChangesAsync().Wait();
+
+            // Act
+            var result = controller.GetBlockedAvailability("test-doctor-id", nextMonth.Year, nextMonth.Month);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(okResult.Value);
+        }
+
+        [Fact]
+        public void GetBlockedAvailability_CompleteIntegration_ReturnsAllSlotsWithCorrectFormat()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            
+            var targetDate = new DateTime(2025, 3, 1);
+            
+            // Add multiple appointments
+            var appointment1 = new Appointment
+            {
+                Id = "apt-1",
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = new DateTime(2025, 3, 5, 10, 30, 0),
+                Reason = "Test 1"
+            };
+            var appointment2 = new Appointment
+            {
+                Id = "apt-2",
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = new DateTime(2025, 3, 15, 14, 0, 0),
+                Reason = "Test 2"
+            };
+            
+            // Add time-specific blocked slot
+            var blockedSlot1 = new BlockedTimeSlot
+            {
+                Id = "block-1",
+                DoctorId = "test-doctor-id",
+                StartTime = new DateTime(2025, 3, 10, 9, 0, 0),
+                EndTime = new DateTime(2025, 3, 10, 12, 0, 0),
+                IsWholeDay = false,
+                Reason = "Conference"
+            };
+            
+            // Add whole-day blocked slot
+            var blockedSlot2 = new BlockedTimeSlot
+            {
+                Id = "block-2",
+                DoctorId = "test-doctor-id",
+                StartTime = new DateTime(2025, 3, 20, 0, 0, 0),
+                EndTime = new DateTime(2025, 3, 20, 23, 59, 59),
+                IsWholeDay = true,
+                Reason = "Holiday"
+            };
+            
+            _context.Appointments.AddRange(appointment1, appointment2);
+            _context.BlockedTimeSlots.AddRange(blockedSlot1, blockedSlot2);
+            _context.SaveChangesAsync().Wait();
+
+            // Act
+            var result = controller.GetBlockedAvailability("test-doctor-id", 2025, 3);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var slots = Assert.IsAssignableFrom<IEnumerable<object>>(okResult.Value);
+            var slotsList = slots.ToList();
+            
+            // Should have 2 appointments + 2 blocked slots = 4 total
+            Assert.Equal(4, slotsList.Count);
+            
+            // Verify we have correct mix of types
+            var types = slotsList.Select(s => s.GetType().GetProperty("type")?.GetValue(s)?.ToString()).ToList();
+            Assert.Equal(2, types.Count(t => t == "booked"));
+            Assert.Equal(2, types.Count(t => t == "blocked"));
         }
 
         public void Dispose()
