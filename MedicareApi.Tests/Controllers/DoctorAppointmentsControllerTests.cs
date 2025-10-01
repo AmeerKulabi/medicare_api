@@ -987,6 +987,77 @@ namespace MedicareApi.Tests.Controllers
             Assert.NotNull(okResult.Value);
         }
 
+        [Fact]
+        public void GetBlockedAvailability_CompleteIntegration_ReturnsAllSlotsWithCorrectFormat()
+        {
+            // Arrange
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            
+            var targetDate = new DateTime(2025, 3, 1);
+            
+            // Add multiple appointments
+            var appointment1 = new Appointment
+            {
+                Id = "apt-1",
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = new DateTime(2025, 3, 5, 10, 30, 0),
+                Reason = "Test 1"
+            };
+            var appointment2 = new Appointment
+            {
+                Id = "apt-2",
+                PatientId = "patient-user-id",
+                DoctorId = "test-doctor-id",
+                Status = "confirmed",
+                ScheduledAt = new DateTime(2025, 3, 15, 14, 0, 0),
+                Reason = "Test 2"
+            };
+            
+            // Add time-specific blocked slot
+            var blockedSlot1 = new BlockedTimeSlot
+            {
+                Id = "block-1",
+                DoctorId = "test-doctor-id",
+                StartTime = new DateTime(2025, 3, 10, 9, 0, 0),
+                EndTime = new DateTime(2025, 3, 10, 12, 0, 0),
+                IsWholeDay = false,
+                Reason = "Conference"
+            };
+            
+            // Add whole-day blocked slot
+            var blockedSlot2 = new BlockedTimeSlot
+            {
+                Id = "block-2",
+                DoctorId = "test-doctor-id",
+                StartTime = new DateTime(2025, 3, 20, 0, 0, 0),
+                EndTime = new DateTime(2025, 3, 20, 23, 59, 59),
+                IsWholeDay = true,
+                Reason = "Holiday"
+            };
+            
+            _context.Appointments.AddRange(appointment1, appointment2);
+            _context.BlockedTimeSlots.AddRange(blockedSlot1, blockedSlot2);
+            _context.SaveChangesAsync().Wait();
+
+            // Act
+            var result = controller.GetBlockedAvailability("test-doctor-id", 2025, 3);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var slots = Assert.IsAssignableFrom<IEnumerable<object>>(okResult.Value);
+            var slotsList = slots.ToList();
+            
+            // Should have 2 appointments + 2 blocked slots = 4 total
+            Assert.Equal(4, slotsList.Count);
+            
+            // Verify we have correct mix of types
+            var types = slotsList.Select(s => s.GetType().GetProperty("type")?.GetValue(s)?.ToString()).ToList();
+            Assert.Equal(2, types.Count(t => t == "booked"));
+            Assert.Equal(2, types.Count(t => t == "blocked"));
+        }
+
         public void Dispose()
         {
             _context?.Dispose();
