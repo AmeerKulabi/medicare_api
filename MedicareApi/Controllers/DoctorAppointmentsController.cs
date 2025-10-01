@@ -134,7 +134,20 @@ namespace MedicareApi.Controllers
             await _db.SaveChangesAsync();
             if (_emailService != null)
                 _emailService.SendAppointmentBooked(User.Identity.Name, newAppointment.ScheduledAt, doctor.Name, doctor.ClinicAddress, "");
-            return Ok(newAppointment);
+            
+            // Return formatted response for calendar display
+            var response = new
+            {
+                id = newAppointment.Id,
+                patientId = newAppointment.PatientId,
+                doctorId = newAppointment.DoctorId,
+                status = newAppointment.Status,
+                scheduledAt = newAppointment.ScheduledAt,
+                date = newAppointment.ScheduledAt.ToString("yyyy-MM-dd"),
+                time = newAppointment.ScheduledAt.ToString("HH:mm"),
+                reason = newAppointment.Reason
+            };
+            return Ok(response);
         }
 
         [HttpPut("{id}")]
@@ -253,49 +266,76 @@ namespace MedicareApi.Controllers
         [HttpGet("doctor/{id}")]
         public IActionResult GetBlockedAvailability(
         [FromRoute] string id,
-        [FromQuery] int week)
+        [FromQuery] int? year,
+        [FromQuery] int? month)
         {
+            // Default to current month if not specified
+            var targetYear = year ?? DateTime.UtcNow.Year;
+            var targetMonth = month ?? DateTime.UtcNow.Month;
 
-            var year = DateTime.UtcNow.Year; // or allow it to be passed too
-            var weekNum = GetCurrentWeekNumber() + week;
-            var startOfWeek = FirstDateOfWeekISO8601(year, weekNum);
-            var endOfWeek = startOfWeek.AddDays(7);
-            var blockedAppointments = _db.Appointments
+            // Calculate date range for the month
+            var startOfMonth = new DateTime(targetYear, targetMonth, 1);
+            var endOfMonth = startOfMonth.AddMonths(1);
+
+            // Get booked appointments
+            var bookedAppointments = _db.Appointments
                 .Where(a =>
                     a.DoctorId == id &&
-                    a.ScheduledAt >= startOfWeek &&
-                    a.ScheduledAt < endOfWeek)
+                    a.ScheduledAt >= startOfMonth &&
+                    a.ScheduledAt < endOfMonth)
                 .ToList();
-            var weekBookedSlots = new List<List<string>>();
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
-            weekBookedSlots.Add(new List<string>());
 
-            foreach( var b in blockedAppointments)
+            // Get blocked time slots
+            var blockedTimeSlots = _db.BlockedTimeSlots
+                .Where(b =>
+                    b.DoctorId == id &&
+                    b.StartTime < endOfMonth &&
+                    b.EndTime >= startOfMonth)
+                .ToList();
+
+            // Create flat array of slots
+            var slots = new List<object>();
+
+            // Add booked appointments
+            foreach (var appointment in bookedAppointments)
             {
-                if (b.ScheduledAt.DayOfWeek == DayOfWeek.Sunday)
-                    weekBookedSlots[0].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Monday)
-                    weekBookedSlots[1].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Tuesday)
-                    weekBookedSlots[2].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Wednesday)
-                    weekBookedSlots[3].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Thursday)
-                    weekBookedSlots[4].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Friday)
-                    weekBookedSlots[5].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else if (b.ScheduledAt.DayOfWeek == DayOfWeek.Saturday)
-                    weekBookedSlots[6].Add(b.ScheduledAt.TimeOfDay.ToString());
-                else
-                    throw new Exception("Invalid date for an appointment");
+                slots.Add(new
+                {
+                    date = appointment.ScheduledAt.ToString("yyyy-MM-dd"),
+                    time = appointment.ScheduledAt.ToString("HH:mm"),
+                    type = "booked"
+                });
             }
 
-            return Ok(weekBookedSlots);
+            // Add blocked time slots
+            foreach (var blocked in blockedTimeSlots)
+            {
+                if (blocked.IsWholeDay)
+                {
+                    // For whole day blocks, add a single entry for the date
+                    slots.Add(new
+                    {
+                        date = blocked.StartTime.ToString("yyyy-MM-dd"),
+                        time = (string)null,
+                        type = "blocked",
+                        wholeDay = true
+                    });
+                }
+                else
+                {
+                    // For time-specific blocks, add entry with time range
+                    slots.Add(new
+                    {
+                        date = blocked.StartTime.ToString("yyyy-MM-dd"),
+                        time = blocked.StartTime.ToString("HH:mm"),
+                        endTime = blocked.EndTime.ToString("HH:mm"),
+                        type = "blocked",
+                        wholeDay = false
+                    });
+                }
+            }
+
+            return Ok(slots);
         }
     }
 }
