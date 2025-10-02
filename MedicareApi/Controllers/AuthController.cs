@@ -98,7 +98,22 @@ namespace MedicareApi.Controllers
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (!result.Succeeded)
                 {
-                    return BadRequest(ApiErrors.UserCreationFailed);
+                    // Step 1: Collect errors
+                    var errors = result.Errors.Select(e => e.Description).ToList();
+
+                    // Step 2: Translate errors to Arabic
+                    var translatedErrors = errors.Select(e => ErrorHelper.TranslateToArabic(e)).ToList();
+
+                    // Step 3: Combine into a single message
+                    var errorMessage = string.Join("، ", translatedErrors);
+
+                    // Step 4: Return with proper action and code
+                    return BadRequest(new ApiError
+                    {
+                        errorCode = "USER_CREATION_FAILED",
+                        message = errorMessage,
+                        action = "تحقق من البيانات المدخلة وحاول مرة أخرى"
+                    });
                 }
                 if (user.IsDoctor)
                 {

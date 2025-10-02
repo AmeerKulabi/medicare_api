@@ -24,7 +24,7 @@ namespace MedicareApi.Utils
         public const string BlockedSlotsCouldNotBeRetrieved = "تعذر استرجاع الفترات المحجوزة.";
         public const string AvailabilitySlotCouldNotBeUpdated = "تعذر تحديث فترة التوفر.";
         public const string InvalidDateTimeFormat = "تنسيق الوقت والتاريخ غير صحيح.";
-        public const string EndAndSrartTimeRequired = "يجب تحديد وقت البداية والنهاية عند الحجز طوال اليوم.";
+        public const string EndAndSrartTimeRequired = "يجب تحديد وقت البداية والنهاية.";
         public const string InvalidTimeSpanFormat = "تنسيق الفترة الزمنية غير صحيح.";
         public const string BlockFailedDueToExistingAppointments = "لا يمكن حجز الفترة الزمنية لوجود مواعيد أخرى خلال الفترة المحجوزة.";
         public const string BlockFailedDueToOverlappingBlockedSlots = "الفترة الزمنية تتداخل مع فترات محجوزة أخرى.";
@@ -44,6 +44,14 @@ namespace MedicareApi.Utils
         public const string LanguagesCouldNotRetrieved = "حدث خطأ أثناء استرجاع اللغات.";
         public const string DoctorDetailsCouldNotRetrieved = "حدث خطأ أثناء استرجاع تفاصيل الطبيب.";
         public const string CannotCraeteAppointmentsForOthers = "لا يمكنك إنشاء مواعيد للآخرين.";
+        public const string CannotCreateAppointmentsForOtherDoctors = "لا يمكنك إنشاء مواعيد لأطباء آخرين.";
+        public const string AppointmentAlreadyBooked = "تم حجز الموعد بالفعل.";
+        public const string TimeSlotNotAvailableForBooking = "الفترة الزمنية المحددة غير متاحة للحجز لأنها محجوزة من قبل الطبيب.";
+        public const string TimeSlotCouldNotBeBooked = "حدث خطأ أثناء حجز الموعد.";
+        public const string CannotDeleteAppointmentsOfOthers = "لا يمكنك حذف مواعيد لأطباء آخرين.";
+        public const string AppointmentsDeletionFailed = "حدث خطأ أثناء حذف المواعيد.";
+        public const string AppointmentsUpdateFailed = "حدث خطأ أثناء تحديث المواعيد.";
+        public const string CannotUpdateAppointmentsOfOtherDoctors = "لا يمكنك تعديل مواعيد لأطباء آخرين.";
     }
 
     public static class ErrorActions
@@ -61,7 +69,7 @@ namespace MedicareApi.Utils
         public const string BlockFailedDueToExistingAppointments = "يرجى حذف المواعيد خلال الفترة المراد حجزها ثم محاولة الحجز مرة أخرى.";
         public const string BlockFailedDueToOverlappingBlockedSlots = "يرجى حذف الفترات المحجوزة المتداخلة ثم محاولة الحجز مرة أخرى.";
         public const string TimeSlotNotAvailableForBooking = "يرجى مراجعة فترات التوفر للطبيب واختيار واحدة منها.";
-        public const string AppointmentsUpdateFailed = "حدث خطأ أثناء تحديث المواعيد.";
+
     }
 
     public static class ErrorCodes
@@ -114,5 +122,44 @@ namespace MedicareApi.Utils
         public const string AppointmentsUpdateFailed = "COULD_NOT_UPDATE_APPOINTMENT";
         public const string AppointmentsDeletionFailed = "COULD_NOT_DELETE_APPOINTMENT";
         public const string CannotDeleteAppointmentsOfOthers = "CANNOT_DELETE_APPOINTMENT_OF_OTHER_DOCTORS";
+    }
+
+    public class ErrorHelper
+    {
+        // You can add more translations as needed
+        private static readonly Dictionary<string, string> ErrorTranslations = new Dictionary<string, string>
+    {
+        { "Passwords must have at least one non alphanumeric character.", "يجب أن تحتوي كلمة المرور على رمز واحد على الأقل." },
+        { "Passwords must be at least 6 characters.", "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل." },
+        { "Passwords must have at least one digit ('0'-'9').", "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل." },
+        { "Passwords must have at least one uppercase ('A'-'Z').", "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل." },
+        { "Passwords must have at least one lowercase ('a'-'z').", "يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل." },
+        { "Email already taken.", "البريد الإلكتروني مستخدم بالفعل." },
+        { "User name already taken.", "اسم المستخدم مستخدم بالفعل." },
+        { "Invalid email address.", "عنوان البريد الإلكتروني غير صحيح." },
+        { "Invalid token.", "رمز غير صالح." },
+        { "User already has a password set.", "لدى المستخدم كلمة مرور محددة بالفعل." },
+        { "User lockout not enabled.", "قفل المستخدم غير مفعل." },
+        { "User is not allowed to sign in.", "المستخدم غير مسموح له بتسجيل الدخول." },
+        { "User is locked out.", "المستخدم مقفل." },
+        { "Recovery code redemption failed.", "فشل استرداد رمز الاستعادة." },
+        { "No email associated with this user.", "لا يوجد بريد إلكتروني مرتبط بهذا المستخدم." },
+        { "Cannot delete user.", "لا يمكن حذف المستخدم." }
+    };
+
+        /// <summary>
+        /// Translates an error message to Arabic if available, otherwise returns the original message.
+        /// </summary>
+        public static string TranslateToArabic(string error)
+        {
+            if (string.IsNullOrWhiteSpace(error))
+                return "";
+
+            if (ErrorTranslations.TryGetValue(error, out var arabic))
+                return arabic;
+
+            // Optionally, you can customize how unknown errors are returned
+            return $"خطأ: {error}";
+        }
     }
 }
