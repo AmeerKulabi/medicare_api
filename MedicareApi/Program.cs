@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -73,6 +74,27 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtIssuer,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ClockSkew = TimeSpan.Zero // Reduce token expiration tolerance
+    }; 
+    
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = context =>
+        {
+            // Skip the default logic
+            context.HandleResponse();
+
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+
+            var result = JsonSerializer.Serialize(new
+            {
+                errorCode = "UNAUTHORIZED",
+                message = "??? ????? ?????? ?????? ??? ??? ??????.",
+                action = "???? ????? ?????? ?? ????? ????????."
+            });
+
+            return context.Response.WriteAsync(result);
+        }
     };
 });
 

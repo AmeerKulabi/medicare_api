@@ -27,73 +27,95 @@ namespace MedicareApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProfile()
         {
-            var userId = User.FindFirst("uid")?.Value;
-            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+            try
+            {
+                var userId = User.FindFirst("uid")?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(ApiErrors.UserDoesNotExist);
+                }
+                var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+                if (!isDoctor) return Unauthorized(ApiErrors.FunctionalityAvailableOnlyForDoctors);
 
-            var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return NotFound();
-            var user = await _userManager.FindByIdAsync(doctor.UserId);
+                var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+                if (doctor == null) return NotFound(ApiErrors.UserDoesNotExist);
+                var user = await _userManager.FindByIdAsync(doctor.UserId);
 
-            // Ensure profile picture URL includes default if none set
-            doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
+                // Ensure profile picture URL includes default if none set
+                doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
 
-            return Ok(DoctorHelper.FromDoctorToDoctorProfileDto(doctor, user));
+                return Ok(DoctorHelper.FromDoctorToDoctorProfileDto(doctor, user));
+            }
+            catch
+            {
+                return BadRequest(ApiErrors.ProfileRetrievingFailed);
+            }
         }
 
         [HttpPut]
         public async Task<IActionResult> UpdateProfile([FromBody] ProfileUpdateDto updateDto)
         {
-            var userId = User.FindFirst("uid")?.Value;
-            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
-
-            var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return NotFound();
-
-            // Map fields from DTO to Doctor entity
-            if (updateDto.DateOfBirth.HasValue) doctor.DateOfBirth = updateDto.DateOfBirth;
-            if (updateDto.Gender != null) doctor.Gender = updateDto.Gender;
-            if (updateDto.MedicalLicense != null) doctor.MedicalLicense = updateDto.MedicalLicense;
-            if (updateDto.LicenseExpiry.HasValue) doctor.LicenseExpiry = updateDto.LicenseExpiry;
-
-            if (updateDto.Specialization != null) doctor.Specialization = updateDto.Specialization;
-            if (updateDto.SubSpecialization != null) doctor.SubSpecialization = updateDto.SubSpecialization;
-            if (updateDto.YearsOfExperience != null) doctor.YearsOfExperience = updateDto.YearsOfExperience;
-
-            if (updateDto.MedicalSchool != null) doctor.MedicalSchool = updateDto.MedicalSchool;
-            if (updateDto.GraduationYear != null) doctor.GraduationYear = updateDto.GraduationYear;
-            if (updateDto.ProfessionalBiography != null) doctor.ProfessionalBiography = updateDto.ProfessionalBiography;
-
-            if (updateDto.ClinicName != null) doctor.ClinicName = updateDto.ClinicName;
-            if (updateDto.ClinicType != null) doctor.ClinicType = updateDto.ClinicType;
-            if (updateDto.ClinicAddress != null) doctor.ClinicAddress = updateDto.ClinicAddress;
-
-            if (updateDto.ConsultationFee != null) doctor.ConsultationFee = updateDto.ConsultationFee;
-            if (updateDto.Languages != null) doctor.Languages = updateDto.Languages;
-
-            if (updateDto.TermsAccepted.HasValue) doctor.TermsAccepted = updateDto.TermsAccepted.Value;
-            if (updateDto.PrivavyAccepted.HasValue) doctor.PrivacyAccepted = updateDto.PrivavyAccepted;
-            if (updateDto.City != null) doctor.City = updateDto.City;
-
-            if(updateDto.Phone != null)
+            try
             {
-                var user = await _userManager.FindByIdAsync(doctor.UserId);
-                user.Phone = updateDto.Phone;
-                await _userManager.UpdateAsync(user);
-            }
+                var userId = User.FindFirst("uid")?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(ApiErrors.UserDoesNotExist);
+                }
+                var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+                if (!isDoctor) return Unauthorized(ApiErrors.FunctionalityAvailableOnlyForDoctors);
 
-            if (!doctor.RegistrationCompleted) doctor.RegistrationCompleted = true;
+                var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+                if (doctor == null) return NotFound(ApiErrors.UserDoesNotExist);
 
-            #if DEBUG
+                // Map fields from DTO to Doctor entity
+                if (updateDto.DateOfBirth.HasValue) doctor.DateOfBirth = updateDto.DateOfBirth;
+                if (updateDto.Gender != null) doctor.Gender = updateDto.Gender;
+                if (updateDto.MedicalLicense != null) doctor.MedicalLicense = updateDto.MedicalLicense;
+                if (updateDto.LicenseExpiry.HasValue) doctor.LicenseExpiry = updateDto.LicenseExpiry;
+
+                if (updateDto.Specialization != null) doctor.Specialization = updateDto.Specialization;
+                if (updateDto.SubSpecialization != null) doctor.SubSpecialization = updateDto.SubSpecialization;
+                if (updateDto.YearsOfExperience != null) doctor.YearsOfExperience = updateDto.YearsOfExperience;
+
+                if (updateDto.MedicalSchool != null) doctor.MedicalSchool = updateDto.MedicalSchool;
+                if (updateDto.GraduationYear != null) doctor.GraduationYear = updateDto.GraduationYear;
+                if (updateDto.ProfessionalBiography != null) doctor.ProfessionalBiography = updateDto.ProfessionalBiography;
+
+                if (updateDto.ClinicName != null) doctor.ClinicName = updateDto.ClinicName;
+                if (updateDto.ClinicType != null) doctor.ClinicType = updateDto.ClinicType;
+                if (updateDto.ClinicAddress != null) doctor.ClinicAddress = updateDto.ClinicAddress;
+
+                if (updateDto.ConsultationFee != null) doctor.ConsultationFee = updateDto.ConsultationFee;
+                if (updateDto.Languages != null) doctor.Languages = updateDto.Languages;
+
+                if (updateDto.TermsAccepted.HasValue) doctor.TermsAccepted = updateDto.TermsAccepted.Value;
+                if (updateDto.PrivavyAccepted.HasValue) doctor.PrivacyAccepted = updateDto.PrivavyAccepted;
+                if (updateDto.City != null) doctor.City = updateDto.City;
+
+                if (updateDto.Phone != null)
+                {
+                    var user = await _userManager.FindByIdAsync(doctor.UserId);
+                    user.Phone = updateDto.Phone;
+                    await _userManager.UpdateAsync(user);
+                }
+
+                if (!doctor.RegistrationCompleted) doctor.RegistrationCompleted = true;
+
+#if DEBUG
                 if (!doctor.IsActive) doctor.IsActive = true;
-            #endif
+#endif
 
-            await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync();
 
-            doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
+                doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
 
-            return Ok(doctor);
+                return Ok(doctor);
+            }
+            catch
+            {
+                return BadRequest(ApiErrors.ProfileUpdateFailed);
+            }
         }
 
 
@@ -101,31 +123,42 @@ namespace MedicareApi.Controllers
         [HttpPost("upload-picture")]
         public async Task<IActionResult> UploadProfilePicture(IFormFile profilePicture)
         {
-            var userId = User.FindFirst("uid")?.Value;
-            var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
-            if (!isDoctor) return Unauthorized();
+            try
+            {
+                var userId = User.FindFirst("uid")?.Value;
+                if (userId == null)
+                {
+                    return Unauthorized(ApiErrors.UserDoesNotExist);
+                }
+                var isDoctor = User.FindFirst("isDoctor")?.Value == "True";
+                if (!isDoctor) return Unauthorized(ApiErrors.FunctionalityAvailableOnlyForDoctors);
 
-            var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return NotFound();
+                var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
+                if (doctor == null) return NotFound(ApiErrors.UserDoesNotExist);
 
-            if (profilePicture == null || profilePicture.Length == 0)
-                return BadRequest("No file uploaded");
+                if (profilePicture == null || profilePicture.Length == 0)
+                    return BadRequest(ApiErrors.FileNotFound);
 
-            var result = await ProfilePictureHelper.SaveProfilePicture(profilePicture, doctor.Id);
-            if (!result.success)
-                return BadRequest(result.error);
+                var result = await ProfilePictureHelper.SaveProfilePicture(profilePicture, doctor.Id);
+                if (!result.success)
+                    return BadRequest(ApiErrors.PictureUploadFailed);
 
-            // Delete old profile picture if exists
-            ProfilePictureHelper.DeleteProfilePicture(doctor.ProfilePictureUrl);
+                // Delete old profile picture if exists
+                ProfilePictureHelper.DeleteProfilePicture(doctor.ProfilePictureUrl);
 
-            // Update doctor profile with new image URL
-            doctor.ProfilePictureUrl = result.url;
-            await _db.SaveChangesAsync();
+                // Update doctor profile with new image URL
+                doctor.ProfilePictureUrl = result.url;
+                await _db.SaveChangesAsync();
 
-            UploadPictureResponse response = new UploadPictureResponse();
-            response.profilePictureUrl = doctor.ProfilePictureUrl;
+                UploadPictureResponse response = new UploadPictureResponse();
+                response.profilePictureUrl = doctor.ProfilePictureUrl;
 
-            return Ok(response);
+                return Ok(response);
+            }
+            catch
+            {
+                return BadRequest(ApiErrors.PictureUploadFailed);
+            }
         }
     }
 }

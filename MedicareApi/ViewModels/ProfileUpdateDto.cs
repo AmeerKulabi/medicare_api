@@ -29,7 +29,6 @@ namespace MedicareApi.ViewModels
         [StringLength(200)]
         public string? MedicalSchool { get; set; }
 
-        [StringLength(10)]
         public int? GraduationYear { get; set; }
 
         public string? ProfessionalBiography { get; set; }   // maps to ProfessionalBiography

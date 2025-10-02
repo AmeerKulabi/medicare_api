@@ -26,7 +26,6 @@ namespace MedicareApi.ViewModels
 
     public class RegisterResponse
     {
-        public string Token { get; set; } = string.Empty;
         public string UserId { get; set; } = string.Empty;
         public bool IsDoctor { get; set; }
         public bool IsActive { get; set; }
