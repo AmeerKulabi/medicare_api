@@ -2,6 +2,7 @@
 using MedicareApi.Models;
 using MedicareApi.Utils;
 using MedicareApi.ViewModels;
+using MedicareApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -17,11 +18,13 @@ namespace MedicareApi.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IAnalyticsService _analyticsService;
 
-        public ProfileController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public ProfileController(ApplicationDbContext db, UserManager<ApplicationUser> userManager, IAnalyticsService analyticsService)
         {
             _db = db;
             _userManager = userManager;
+            _analyticsService = analyticsService;
         }
 
         [HttpGet]
@@ -110,6 +113,9 @@ namespace MedicareApi.Controllers
 
                 doctor.ProfilePictureUrl = ProfilePictureHelper.GetProfilePictureUrl(doctor.ProfilePictureUrl);
 
+                // Track doctor profile update
+                _analyticsService.TrackDoctorProfileUpdated(doctor.Id);
+
                 return Ok(doctor);
             }
             catch
@@ -149,6 +155,9 @@ namespace MedicareApi.Controllers
                 // Update doctor profile with new image URL
                 doctor.ProfilePictureUrl = result.url;
                 await _db.SaveChangesAsync();
+
+                // Track doctor profile picture update
+                _analyticsService.TrackDoctorProfilePictureUpdated(doctor.Id);
 
                 UploadPictureResponse response = new UploadPictureResponse();
                 response.profilePictureUrl = doctor.ProfilePictureUrl;

@@ -52,6 +52,11 @@ namespace MedicareApi.Controllers
         private readonly IWebHostEnvironment _webHostEnvironment;
 
         /// <summary>
+        /// Analytics service.
+        /// </summary>
+        private readonly IAnalyticsService _analyticsService;
+
+        /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="userManager">Identity framework, user manager.</param>
@@ -60,8 +65,9 @@ namespace MedicareApi.Controllers
         /// <param name="db">Access db.</param>
         /// <param name="emailService">Email service.</param>
         /// <param name="webHostEnvironment">Web host environment.</param>
+        /// <param name="analyticsService">Analytics service.</param>
         public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration,
-            ApplicationDbContext db, IEmailService emailService, IWebHostEnvironment webHostEnvironment)
+            ApplicationDbContext db, IEmailService emailService, IWebHostEnvironment webHostEnvironment, IAnalyticsService analyticsService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -69,6 +75,7 @@ namespace MedicareApi.Controllers
             _db = db;
             _emailService = emailService;
             _webHostEnvironment = webHostEnvironment;
+            _analyticsService = analyticsService;
         }
 
         /// <summary>
@@ -140,6 +147,9 @@ namespace MedicareApi.Controllers
                 // Send confirmation email
                 await _emailService.SendEmailConfirmationAsync(model.Email, confirmationLink!);
 
+                // Track user registration
+                _analyticsService.TrackUserRegistration(user.Id, user.IsDoctor);
+
                 // Additional doctor profile creation logic can go here.
                 return Ok(new RegisterResponse { UserId = user.Id, IsActive = user.IsDoctor ? false : true, RegistrationCompleted = user.IsDoctor ? false : true, IsDoctor = user.IsDoctor });
             } catch (Exception ex)
@@ -209,6 +219,10 @@ namespace MedicareApi.Controllers
                     registrationCompleted = true;
                     isActive = true;
                 }
+
+                // Track user sign-in
+                _analyticsService.TrackSignIn(user.Id, user.IsDoctor);
+
                 return Ok(new LoginResponse
                 {
                     Token = new JwtSecurityTokenHandler().WriteToken(token),

@@ -22,11 +22,17 @@ namespace MedicareApi.Controllers
         /// </summary>
         private readonly IEmailService _emailService;
 
-        public PatientAppointmentController(ApplicationDbContext db, IEmailService emailService, UserManager<ApplicationUser> userManager)
+        /// <summary>
+        /// Analytics service.
+        /// </summary>
+        private readonly IAnalyticsService _analyticsService;
+
+        public PatientAppointmentController(ApplicationDbContext db, IEmailService emailService, UserManager<ApplicationUser> userManager, IAnalyticsService analyticsService)
         {
             _db = db;
             _emailService = emailService;
             _userManager = userManager;
+            _analyticsService = analyticsService;
         }
 
         [HttpDelete("{id}")]
@@ -43,12 +49,19 @@ namespace MedicareApi.Controllers
                 var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id && a.PatientId == userId);
                 if (appt == null) return NotFound(ApiErrors.AppointmentNotFound);
 
+                // Store appointment ID for analytics before deletion
+                var appointmentId = appt.Id;
+
                 Doctor doctor = doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.Id == appt.DoctorId);
 
                 _db.Appointments.Remove(appt);
                 await _db.SaveChangesAsync();
                 if (_emailService != null)
                     _emailService.SendAppointmentDeleted(User.Identity.Name, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, "");
+
+                // Track appointment deletion
+                _analyticsService.TrackAppointmentDeleted(appointmentId);
+
                 return NoContent();
             }
             catch

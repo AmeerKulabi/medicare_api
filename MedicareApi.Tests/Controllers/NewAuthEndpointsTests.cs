@@ -1,3 +1,5 @@
+using Moq;
+using MedicareApi.Services;
 using MedicareApi.Controllers;
 using MedicareApi.Services;
 using MedicareApi.ViewModels;
@@ -159,7 +161,7 @@ namespace MedicareApi.Tests.Controllers
                 userManager, Mock.Of<IHttpContextAccessor>(), Mock.Of<IUserClaimsPrincipalFactory<ApplicationUser>>(), null, null, null, null);
             var webHostEnvironment = new Mock<IWebHostEnvironment>();
 
-            var controller = new AuthController(userManager, signInManager.Object, _configurationMock.Object, _context, emailService, webHostEnvironment.Object);
+            var controller = new AuthController(userManager, signInManager.Object, _configurationMock.Object, _context, emailService, webHostEnvironment.Object, Mock.Of<IAnalyticsService>());
 
             // Setup HTTP context for URL generation
             var httpContext = new Mock<HttpContext>();

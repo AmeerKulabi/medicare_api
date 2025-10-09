@@ -123,6 +123,15 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddScoped<MedicareApi.Services.IEmailTemplateService, MedicareApi.Services.EmailTemplateService>();
 builder.Services.AddScoped<MedicareApi.Services.IEmailService, MedicareApi.Services.SmtpEmailService>();
 
+// Register Application Insights
+builder.Services.AddApplicationInsightsTelemetry();
+
+// Register analytics service
+builder.Services.AddScoped<MedicareApi.Services.IAnalyticsService, MedicareApi.Services.AnalyticsService>();
+
+// Register daily metrics background service
+builder.Services.AddHostedService<MedicareApi.BackgroundServices.DailyMetricsService>();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

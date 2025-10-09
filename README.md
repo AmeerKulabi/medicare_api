@@ -10,6 +10,7 @@ A comprehensive RESTful API for managing medical appointments, doctor profiles, 
 - **Patient Portal** - Patient-specific appointment management and profile access
 - **File Upload Support** - Profile picture management for healthcare providers
 - **Comprehensive Security** - Authorization checks, input validation, and secure data handling
+- **Analytics & Monitoring** - Azure Application Insights integration for tracking user activities and system metrics
 
 ## 📋 Prerequisites
 
@@ -47,6 +48,60 @@ dotnet run --project MedicareApi
 ```
 
 The API will be available at `https://localhost:7001` and `http://localhost:5000` by default.
+
+## 📊 Analytics & Monitoring
+
+The Medicare API includes Azure Application Insights integration for comprehensive analytics and monitoring.
+
+### Tracked Events
+
+The system automatically tracks the following events:
+- **User Registration** - When new users sign up (doctors and patients)
+- **User Sign-In** - When users log in to the system
+- **Appointment Creation** - When new appointments are created
+- **Appointment Updates** - When appointments are modified
+- **Appointment Deletion** - When appointments are cancelled
+- **Doctor Search** - When users search for doctors (includes search query and filters)
+- **Doctor Details Viewed** - When users view doctor profiles
+- **Doctor Profile Updated** - When doctors update their profiles
+- **Doctor Profile Picture Updated** - When doctors update their profile pictures
+- **Daily Metrics** - Automated daily collection of doctor and patient counts (sent at 00:00 UTC)
+
+### Configuration
+
+To enable Application Insights, add your connection string to `appsettings.json`:
+
+```json
+{
+  "ApplicationInsights": {
+    "ConnectionString": "InstrumentationKey=your-instrumentation-key-here;IngestionEndpoint=https://your-region.in.applicationinsights.azure.com/"
+  }
+}
+```
+
+You can obtain the connection string from your Azure Application Insights resource in the Azure Portal.
+
+### Analytics Service
+
+The `AnalyticsService` class (`MedicareApi/Services/AnalyticsService.cs`) provides the following methods:
+- `TrackSignIn(userId, isDoctor)` - Track user login
+- `TrackUserRegistration(userId, isDoctor)` - Track new user registration
+- `TrackAppointmentCreated(appointmentId, patientId, doctorId)` - Track appointment creation
+- `TrackAppointmentUpdated(appointmentId)` - Track appointment updates
+- `TrackAppointmentDeleted(appointmentId)` - Track appointment deletion
+- `TrackDoctorSearch(searchQuery, specialization, location, resultsCount)` - Track doctor searches
+- `TrackDoctorDetailsViewed(doctorId)` - Track doctor profile views
+- `TrackDoctorProfileUpdated(doctorId)` - Track doctor profile updates
+- `TrackDoctorProfilePictureUpdated(doctorId)` - Track profile picture updates
+- `TrackDailyMetrics(doctorCount, patientCount)` - Track daily system metrics
+
+### Daily Metrics Background Service
+
+The `DailyMetricsService` background service automatically sends daily metrics at midnight (00:00 UTC), including:
+- Total number of doctors in the system
+- Total number of patients in the system
+
+This service runs continuously and ensures consistent metric tracking for monitoring system growth.
 
 ## 🧪 Running Tests
 
