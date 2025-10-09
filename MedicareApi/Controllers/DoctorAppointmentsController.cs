@@ -21,13 +21,18 @@ namespace MedicareApi.Controllers
         /// Email service.
         /// </summary>
         private readonly IEmailService _emailService;
+        /// <summary>
+        /// Analytics service.
+        /// </summary>
+        private readonly IAnalyticsService _analyticsService;
 
         public DoctorAppointmentsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager,
-            IEmailService emailService)
+            IEmailService emailService, IAnalyticsService analyticsService)
         {
             _db = db;
             _userManager = userManager;
             _emailService = emailService;
+            _analyticsService = analyticsService;
         }
 
         [HttpGet]
@@ -158,6 +163,9 @@ namespace MedicareApi.Controllers
                 if (_emailService != null)
                     _emailService.SendAppointmentBooked(User.Identity.Name, newAppointment.ScheduledAt, doctor.Name, doctor.ClinicAddress, "");
 
+                // Track appointment creation
+                _analyticsService.TrackAppointmentCreated(newAppointment.Id, newAppointment.PatientId, newAppointment.DoctorId);
+
                 // Return formatted response for calendar display
                 var response = new
                 {
@@ -227,6 +235,10 @@ namespace MedicareApi.Controllers
                 await _db.SaveChangesAsync();
                 if (_emailService != null)
                     _emailService.SendAppointmentChanged(User.Identity.Name, oldApt.ScheduledAt, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, "");
+
+                // Track appointment update
+                _analyticsService.TrackAppointmentUpdated(appt.Id);
+
                 return Ok(appt);
             }
             catch
@@ -249,6 +261,9 @@ namespace MedicareApi.Controllers
                 var appt = await _db.Appointments.FirstOrDefaultAsync(a => a.Id == id);
                 if (appt == null) return NotFound(ApiErrors.AppointmentNotFound);
 
+                // Store appointment ID for analytics before deletion
+                var appointmentId = appt.Id;
+
                 _db.Appointments.Remove(appt);
                 await _db.SaveChangesAsync();
 
@@ -270,6 +285,10 @@ namespace MedicareApi.Controllers
 
                 if (_emailService != null)
                     _emailService.SendAppointmentDeleted(User.Identity.Name, appt.ScheduledAt, doctor.Name, doctor.ClinicAddress, "");
+
+                // Track appointment deletion
+                _analyticsService.TrackAppointmentDeleted(appointmentId);
+
                 return NoContent();
             }
             catch

@@ -1,3 +1,5 @@
+using Moq;
+using MedicareApi.Services;
 using MedicareApi.Controllers;
 using MedicareApi.Data;
 using MedicareApi.Models;
@@ -97,7 +99,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAppointments_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContextWithoutAuth(controller);
 
             // Act
@@ -111,7 +113,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAppointments_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -125,7 +127,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAppointments_DoctorNotFound_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "non-existent-user", true);
 
             // Act
@@ -139,7 +141,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetAppointments_ValidDoctor_ReturnsAppointments()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -155,7 +157,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContextWithoutAuth(controller);
             var appointment = new Appointment
             {
@@ -177,7 +179,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_UnauthorizedUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "unauthorized-user", false);
             
             var appointment = new Appointment
@@ -200,7 +202,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_PatientCreatingOwnAppointment_CreatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "patient-user-id", false);
             
             var appointment = new Appointment
@@ -231,7 +233,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_DoctorCreatingAppointment_CreatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
             
             var appointment = new Appointment
@@ -257,7 +259,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContextWithoutAuth(controller);
             var update = new UpdateAppointment
             {
@@ -275,7 +277,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "patient-user-id", false);
             var update = new UpdateAppointment
             {
@@ -293,7 +295,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_AppointmentNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
             var update = new UpdateAppointment
             {
@@ -311,7 +313,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_ValidUpdate_UpdatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
             var newScheduledTime = DateTime.Now.AddDays(5);
             var update = new UpdateAppointment
@@ -340,7 +342,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeleteAppointment_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContextWithoutAuth(controller);
 
             // Act
@@ -354,7 +356,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeleteAppointment_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -368,7 +370,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeleteAppointment_AppointmentNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -382,7 +384,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task DeleteAppointment_ValidAppointment_DeletesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Verify appointment exists before deletion
@@ -404,7 +406,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_RequiredFieldsValidation()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "patient-user-id", false);
             
             var appointment = new Appointment
@@ -428,7 +430,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_WithoutReason_CreatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "patient-user-id", false);
             
             var appointment = new Appointment
@@ -460,7 +462,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_WithEmptyReason_CreatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "patient-user-id", false);
             
             var appointment = new Appointment
@@ -492,7 +494,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_WithoutReason_UpdatesOtherFieldsSuccessfully()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
             var newScheduledTime = DateTime.Now.AddDays(5);
             var update = new UpdateAppointment
@@ -522,7 +524,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_WithEmptyReason_UpdatesReasonToEmpty()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
             var update = new UpdateAppointment
             {
@@ -584,7 +586,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_WithReasonExceeding500Characters_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Create a reason that is longer than 500 characters
@@ -613,7 +615,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task CreateAppointment_WithReasonUnder500Characters_ReturnsOk()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Create a reason that is exactly 500 characters
@@ -639,7 +641,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_WithReasonExceeding500Characters_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Create a reason that is longer than 500 characters
@@ -664,7 +666,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateAppointment_WithReasonUnder500Characters_ReturnsOk()
         {
             // Arrange
-            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null);
+            var controller = new DoctorAppointmentsController(_context, _userManagerMock.Object, null, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Create a reason that is exactly 500 characters

@@ -1,3 +1,5 @@
+using Moq;
+using MedicareApi.Services;
 using MedicareApi.Controllers;
 using MedicareApi.Data;
 using MedicareApi.Models;
@@ -79,7 +81,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithoutFilters_ReturnsAllDoctors()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetDoctors(null, null, null, null, null, 1, 20);
@@ -94,7 +96,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithSpecializationFilter_ReturnsFilteredDoctors()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetDoctors("Cardiology", null, null, null, null, 1, 20);
@@ -110,7 +112,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithLocationFilter_ReturnsFilteredDoctors()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetDoctors(null, "Basra", null, null, null, 1, 20);
@@ -126,7 +128,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithSearchFilter_ReturnsMatchingDoctors()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetDoctors(null, null, null, "John", null, 1, 20);
@@ -142,7 +144,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithSpecializationSearch_ReturnsMatchingDoctors()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetDoctors(null, null, null, "Dermatology", null, 1, 20);
@@ -158,7 +160,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctorById_ValidId_ReturnsDoctor()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetDoctorById("doctor-1");
@@ -173,7 +175,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctorById_ValidId_ReturnsOnlyRequiredFields()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetDoctorById("doctor-1");
@@ -204,7 +206,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctorById_ValidIdWithNullFields_ReturnsDefaultValues()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act - doctor-2 has many null fields
             var result = await controller.GetDoctorById("doctor-2");
@@ -233,7 +235,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctorById_InvalidId_ReturnsNotFound()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetDoctorById("invalid-id");
@@ -248,7 +250,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateDoctorInfo_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContextWithoutAuth(controller);
             var formData = new DoctorRegistrationInfo
             {
@@ -268,7 +270,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateDoctorInfo_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "patient-user-id", false);
             var formData = new DoctorRegistrationInfo
             {
@@ -288,7 +290,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateDoctorInfo_DoctorNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "non-existent-user", true);
             var formData = new DoctorRegistrationInfo
             {
@@ -306,7 +308,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateDoctorInfo_ValidDoctor_UpdatesSuccessfully()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "user-1", true);
             var formData = new DoctorRegistrationInfo
             {
@@ -339,7 +341,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_EnsuresDefaultProfilePicture()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act  
             var result = await controller.GetDoctors(null, null, null, null, null, 1, 20);
@@ -358,7 +360,7 @@ namespace MedicareApi.Tests.Controllers
         {
             // Arrange
             var emptyContext = CreateTestDbContext(); // Fresh context without data
-            var controller = new DoctorsController(emptyContext, _userManager);
+            var controller = new DoctorsController(emptyContext, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetDoctors(null, null, null, null, null, 1, 20);
@@ -373,7 +375,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_MultipleFilters_ReturnsCorrectResults()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetDoctors("Cardiology", "Baghdad", null, null, null, 1, 20);
@@ -389,7 +391,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_NoMatchingResults_ReturnsEmptyList()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetDoctors("NonExistentSpecialization", null, null, null, null, 1, 20);
@@ -438,7 +440,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithPagination_ReturnsCorrectPage()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act - Get first page with page size 1
             var result = await controller.GetDoctors(null, null, null, null, null, 1, 1);
@@ -465,7 +467,7 @@ namespace MedicareApi.Tests.Controllers
             doctor2!.Languages = new List<string> { "English", "Kurdish" };
             await _context.SaveChangesAsync();
 
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act - Filter by Arabic
             var result = await controller.GetDoctors(null, null, null, null, new List<string> { "Arabic" }, 1, 20);
@@ -487,7 +489,7 @@ namespace MedicareApi.Tests.Controllers
             doctor2!.Languages = new List<string> { "English", "Kurdish" };
             await _context.SaveChangesAsync();
 
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act - Filter by English AND Arabic (doctor must speak both)
             var result = await controller.GetDoctors(null, null, null, null, new List<string> { "English", "Arabic" }, 1, 20);
@@ -509,7 +511,7 @@ namespace MedicareApi.Tests.Controllers
             doctor2!.YearsOfExperience = 10;
             await _context.SaveChangesAsync();
 
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act - Sort by experience ascending
             var result = await controller.GetDoctors(null, null, "experience_asc", null, null, 1, 20);
@@ -526,7 +528,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetDoctors_WithPaginationExceedsMaxPageSize_LimitsToMaxPageSize()
         {
             // Arrange
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act - Request page size larger than maximum (20)
             var result = await controller.GetDoctors(null, null, null, null, null, 1, 50);
@@ -547,7 +549,7 @@ namespace MedicareApi.Tests.Controllers
             doctor2!.Languages = new List<string> { "English", "Kurdish", "French" };
             await _context.SaveChangesAsync();
 
-            var controller = new DoctorsController(_context, _userManager);
+            var controller = new DoctorsController(_context, _userManager, Mock.Of<IAnalyticsService>());
 
             // Act
             var result = await controller.GetLanguages();

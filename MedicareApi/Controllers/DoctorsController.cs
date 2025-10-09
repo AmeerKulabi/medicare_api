@@ -2,6 +2,7 @@
 using MedicareApi.Models;
 using MedicareApi.Utils;
 using MedicareApi.ViewModels;
+using MedicareApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,11 +17,13 @@ namespace MedicareApi.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IAnalyticsService _analyticsService;
 
-        public DoctorsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public DoctorsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager, IAnalyticsService analyticsService)
         {
             _db = db;
             _userManager = userManager;
+            _analyticsService = analyticsService;
         }
 
         [HttpGet]
@@ -116,6 +119,9 @@ namespace MedicareApi.Controllers
                     HasNextPage = page < totalPages
                 };
 
+                // Track doctor search
+                _analyticsService.TrackDoctorSearch(search, specialization, location, totalCount);
+
                 return Ok(response);
             }
             catch
@@ -157,6 +163,10 @@ namespace MedicareApi.Controllers
                 var user = await _userManager.FindByIdAsync(doctor.UserId);
 
                 var doctorDetailsDto = DoctorHelper.FromDoctorToDoctorDetailsDto(doctor, user);
+
+                // Track doctor details view
+                _analyticsService.TrackDoctorDetailsViewed(id);
+
                 return Ok(doctorDetailsDto);
             }
             catch

@@ -1,3 +1,5 @@
+using Moq;
+using MedicareApi.Services;
 using MedicareApi.Controllers;
 using MedicareApi.Data;
 using MedicareApi.Models;
@@ -59,7 +61,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetProfile_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContextWithoutAuth(controller);
 
             // Act
@@ -73,7 +75,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetProfile_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "patient-user-id", false);
 
             // Act
@@ -87,7 +89,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetProfile_DoctorNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "non-existent-doctor", true);
 
             // Act
@@ -101,7 +103,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task GetProfile_ValidDoctor_ReturnsProfile()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -120,7 +122,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UpdateProfile_ValidUpdate_UpdatesSuccessfully()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
             var updateDto = new ProfileUpdateDto
             {
@@ -161,7 +163,7 @@ namespace MedicareApi.Tests.Controllers
             _context.Doctors.Add(incompleteDoctor);
             await _context.SaveChangesAsync();
 
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "incomplete-doctor-user-id", true);
             var updateDto = new ProfileUpdateDto
             {
@@ -186,7 +188,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_WithoutAuth_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContextWithoutAuth(controller);
             var file = CreateMockFormFile("test.jpg", "image/jpeg");
 
@@ -201,7 +203,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_NonDoctorUser_ReturnsUnauthorized()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "patient-user-id", false);
             var file = CreateMockFormFile("test.jpg", "image/jpeg");
 
@@ -216,7 +218,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_DoctorNotFound_ReturnsNotFound()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "non-existent-doctor", true);
             var file = CreateMockFormFile("test.jpg", "image/jpeg");
 
@@ -231,7 +233,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_NullFile_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
 
             // Act
@@ -245,7 +247,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_EmptyFile_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
             var file = CreateMockFormFile("", "image/jpeg", 0); // Empty file
 
@@ -260,7 +262,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_InvalidFileType_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
             var file = CreateMockFormFile("test.txt", "text/plain");
 
@@ -275,7 +277,7 @@ namespace MedicareApi.Tests.Controllers
         public async Task UploadProfilePicture_FileTooLarge_ReturnsBadRequest()
         {
             // Arrange
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "doctor-user-id", true);
             var file = CreateMockFormFile("large.jpg", "image/jpeg", 6 * 1024 * 1024); // 6MB file
 
@@ -302,7 +304,7 @@ namespace MedicareApi.Tests.Controllers
             _context.Doctors.Add(incompleteDoctor);
             await _context.SaveChangesAsync();
 
-            var controller = new ProfileController(_context, _userManager);
+            var controller = new ProfileController(_context, _userManager, Mock.Of<IAnalyticsService>());
             SetupControllerContext(controller, "inactive-doctor-user-id", true);
             var updateDto = new ProfileUpdateDto
             {
